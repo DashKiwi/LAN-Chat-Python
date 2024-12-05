@@ -26,6 +26,10 @@ python client.py
 python3 client.py
 ```
 Once you have followed those steps follow the instructions on the screen.
+
+Please note: Sometimes the program would give you an incorrect ip if you had VM's installed (or multiple internet drivers).
+to fix, this on windows type "ipconfig" and find your IPv4 address and use that instead (May require trial on error)
+on linux type "hostname -i" and use the first ip address there.
 ## Contributing
 
 Pull requests are welcome. For major changes, please open an issue first
