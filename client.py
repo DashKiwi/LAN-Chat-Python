@@ -36,16 +36,29 @@ if os.name == "nt":
 def send_msg_to_server():
     global send_message
     while True:
+        # Check if spacebar is pressed
         if keyboard.is_pressed("space"):
             send_message += " "
-        if not keyboard.is_pressed("enter") and not keyboard.is_pressed("shift"):
-            send_message += str(keyboard.read_key())
-            print("Counting")
-        elif keyboard.is_pressed("enter") and send_message:
+            print(f"{send_message}", end='\r', flush=True)  # Overwrite the current line
+            time.sleep(0.1)  # Add a small delay to prevent multiple key reads
+
+        # Check if another key is pressed (excluding enter and shift)
+        elif not keyboard.is_pressed("enter") and not keyboard.is_pressed("shift"):
+            key_event = keyboard.read_event(suppress=True)  # Read the key event
+            if key_event.event_type == keyboard.KEY_DOWN:  # Check if the key was pressed down
+                key = key_event.name
+                if len(key) == 1:  # Avoid non-printable keys (shift, enter, etc.)
+                    send_message += key
+                    print(f"{send_message}", end='\r', flush=True)  # Overwrite the current line
+            time.sleep(0.1)  # Add a small delay to prevent multiple key reads
+
+        # Handle Enter key press (send message to the server)
+        elif keyboard.read_event(suppress=True).name == "enter" and send_message:
+            # Send the message to the server
             message_encoded = send_message.encode('utf-8')
             message_header = f"{len(message_encoded):<{HEADER_LENGTH}}".encode('utf-8')
             client_socket.send(message_header + message_encoded)
-            print(f"\033[F\033[K{my_username} > {send_message}")
+            print(f"\033[F\033[K{my_username} > {send_message}")  # Display the message on the screen
             send_message = ""
 
 threading.Thread(target=send_msg_to_server).start()

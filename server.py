@@ -1,5 +1,6 @@
 import socket
 import select
+import time
 
 HEADER_LENGTH = 10
 
@@ -61,7 +62,7 @@ while True:
             print(f"Received message from {user['data'].decode('utf-8')}: {message['data'].decode('utf-8')}")
             for client_socket in clients:
                 if client_socket != notified_socket:
-                    client_socket.send(user["header"] + user["data"] + message["header"] + message["data"])
+                    client_socket.send(str(time.strftime("%H:%M:%S")) + user["header"] + user["data"] + message["header"] + message["data"])
     for notified_socket in exception_sockets:
         sockets_list.remove(notified_socket)
         del clients[notified_socket]
