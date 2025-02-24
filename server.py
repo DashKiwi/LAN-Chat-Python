@@ -2,6 +2,26 @@ import socket
 import select
 import time
 
+def get_local_ip():
+    try:
+        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        s.connect(("8.8.8.8", 80))
+        ip = s.getsockname()[0]
+        s.close()
+        return ip
+    except Exception:
+        return "127.0.0.1"
+
+def receive_message(client_socket):
+    try:
+        message_header = client_socket.recv(HEADER_LENGTH)
+        if not len(message_header):
+            return False
+        message_length = int(message_header.decode("utf-8").strip())
+        return {"header": message_header, "data": client_socket.recv(message_length)}
+    except:
+        return False
+
 HEADER_LENGTH = 10
 
 while True:
@@ -24,18 +44,8 @@ sockets_list = [server_socket]
 clients = {}
 
 hostname = socket.gethostname()
-IP = socket.gethostbyname(hostname)
+IP = get_local_ip()
 print(f"{hostname} is listening for connections on {IP}:{PORT}...")
-
-def receive_message(client_socket):
-    try:
-        message_header = client_socket.recv(HEADER_LENGTH)
-        if not len(message_header):
-            return False
-        message_length = int(message_header.decode("utf-8").strip())
-        return {"header": message_header, "data": client_socket.recv(message_length)}
-    except:
-        return False
 
 while True:
     read_sockets, _, exception_sockets = select.select(sockets_list, [], sockets_list)
