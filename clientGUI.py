@@ -89,9 +89,17 @@ def create_custom_theme(window, text_area, entry_widget, send_button):
         return
     
     bg_color = simpledialog.askstring("Custom Theme", "Enter background color (hex or name):")
+    if not bg_color:
+        return
     fg_color = simpledialog.askstring("Custom Theme", "Enter text color (hex or name):")
+    if not fg_color:
+        return
     entry_bg_color = simpledialog.askstring("Custom Theme", "Enter entry background color (hex or name):")
+    if not entry_bg_color:
+        return
     entry_fg_color = simpledialog.askstring("Custom Theme", "Enter entry text color (hex or name):")
+    if not entry_fg_color:
+        return
     
     THEMES[theme_name] = {
         "bg": bg_color,
