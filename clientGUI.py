@@ -3,16 +3,28 @@ import sys
 import threading
 import select
 import tkinter as tk
-from tkinter import scrolledtext, Toplevel, simpledialog
+import json
+import os
+from tkinter import scrolledtext, Toplevel, simpledialog, filedialog
+
+current_theme_window = None
 
 HEADER_LENGTH = 10
 
-# Themes
-THEMES = {
-    "Light": {"bg": "white", "fg": "black", "entry_bg": "white", "entry_fg": "black"},
-    "Dark": {"bg": "#2E2E2E", "fg": "white", "entry_bg": "#3E3E3E", "entry_fg": "white"},
-}
-current_theme = "Light"
+def set_path():
+    global application_path, THEME_FILE
+    if getattr(sys, 'frozen', False):
+        # Running as a packaged executable
+        application_path = os.path.dirname(sys.executable)
+    else:
+        # Running as a Python script
+        application_path = os.path.dirname(__file__)
+    THEME_FILE = os.path.join(application_path, "themes.json")
+
+def save_themes():
+    global THEME_FILE
+    with open(THEME_FILE, "w") as file:
+        json.dump(THEMES, file, indent=4)
 
 def apply_theme(window, text_area, entry_widget, send_button):
     theme = THEMES[current_theme]
@@ -22,20 +34,54 @@ def apply_theme(window, text_area, entry_widget, send_button):
     send_button.config(bg=theme["entry_bg"], fg=theme["entry_fg"])
 
 def open_theme_selector(window, text_area, entry_widget, send_button):
-    global current_theme
+    global current_theme_window
     theme_window = Toplevel(window)
     theme_window.title("Select Theme")
-    theme_window.geometry("250x200")
+    theme_window.geometry("200x250")
     
+    # Store the reference of the theme_window in the global variable
+    # Close the old theme selector window if it's open
+    if current_theme_window:
+        current_theme_window.destroy()  # This closes the old theme selector window
+    current_theme_window = theme_window
+    
+    # Create a Canvas widget for scrolling
+    canvas = tk.Canvas(theme_window)
+    canvas.grid(row=0, column=0, sticky="nsew")  # Expand to all directions in grid
+    
+    # Create a Scrollbar linked to the canvas
+    scrollbar = tk.Scrollbar(theme_window, orient=tk.VERTICAL, command=canvas.yview)
+    scrollbar.grid(row=0, column=1, sticky="ns")  # Place scrollbar to the right
+    
+    # Configure the canvas to work with the scrollbar
+    canvas.config(yscrollcommand=scrollbar.set)
+    
+    # Create a frame inside the canvas to contain the theme buttons
+    button_frame = tk.Frame(canvas)
+    canvas.create_window((0, 0), window=button_frame, anchor="nw")
+    
+    # Add the theme buttons to the button_frame
     for theme in THEMES.keys():
-        tk.Button(theme_window, text=theme, command=lambda t=theme: set_theme(t, window, text_area, entry_widget, send_button)).pack(pady=5)
+        tk.Button(button_frame, text=theme, command=lambda t=theme: set_theme(t, window, text_area, entry_widget, send_button)).pack(pady=5)
     
-    tk.Button(theme_window, text="Create Custom Theme", command=lambda: create_custom_theme(window, text_area, entry_widget, send_button)).pack(pady=10)
+    # Add the custom theme, export, and import buttons
+    tk.Button(button_frame, text="Create Custom Theme", command=lambda: create_custom_theme(window, text_area, entry_widget, send_button)).pack(pady=5)
+    tk.Button(button_frame, text="Export Themes", command=export_themes).pack(pady=5)
+    tk.Button(button_frame, text="Import Themes", command=lambda: import_themes(window, text_area, entry_widget, send_button)).pack(pady=5)
+    
+    # Update the scroll region of the canvas after adding buttons
+    button_frame.update_idletasks()  # Ensure frame size is updated before setting scroll region
+    canvas.config(scrollregion=canvas.bbox("all"))  # Set the scroll region to the bounds of all items in the canvas
+    
+    # Configure grid row and column weights to allow resizing
+    theme_window.grid_rowconfigure(0, weight=1)  # Allow row 0 (Canvas) to expand
+    theme_window.grid_columnconfigure(0, weight=1)  # Allow column 0 (Canvas) to expand
 
 def set_theme(theme, window, text_area, entry_widget, send_button):
     global current_theme
     current_theme = theme
     apply_theme(window, text_area, entry_widget, send_button)
+    save_themes()
 
 def create_custom_theme(window, text_area, entry_widget, send_button):
     theme_name = simpledialog.askstring("Custom Theme", "Enter theme name:")
@@ -47,8 +93,43 @@ def create_custom_theme(window, text_area, entry_widget, send_button):
     entry_bg_color = simpledialog.askstring("Custom Theme", "Enter entry background color (hex or name):")
     entry_fg_color = simpledialog.askstring("Custom Theme", "Enter entry text color (hex or name):")
     
-    THEMES[theme_name] = {"bg": bg_color, "fg": fg_color, "entry_bg": entry_bg_color, "entry_fg": entry_fg_color}
+    THEMES[theme_name] = {
+        "bg": bg_color,
+        "fg": fg_color,
+        "entry_bg": entry_bg_color,
+        "entry_fg": entry_fg_color
+    }
+    
+    save_themes()
     set_theme(theme_name, window, text_area, entry_widget, send_button)
+
+    # Update theme selector to include the new theme
+    open_theme_selector(window, text_area, entry_widget, send_button)
+
+def export_themes():
+    file_path = filedialog.asksaveasfilename(defaultextension=".json", filetypes=[("JSON Files", "*.json")])
+    if file_path:
+        with open(file_path, "w") as file:
+            json.dump(THEMES, file, indent=4)
+
+def import_themes(window, text_area, entry_widget, send_button):
+    global THEMES, current_theme_window
+    file_path = filedialog.askopenfilename(filetypes=[("JSON Files", "*.json")])
+    if file_path:
+        with open(file_path, "r") as file:
+            imported_themes = json.load(file)
+            THEMES.update(imported_themes)
+            save_themes()
+            
+            # Reapply the current theme after importing new themes
+            apply_theme(window, text_area, entry_widget, send_button)
+
+            # Close the old theme selector window if it exists
+            if current_theme_window:
+                current_theme_window.destroy()
+
+            # Open the theme selector again with the updated list
+            open_theme_selector(window, text_area, entry_widget, send_button)
 
 def connect_to_server():
     while True:
@@ -162,6 +243,42 @@ def create_gui(client_socket):
     # Start the Tkinter event loop
     window.mainloop()
 
+set_path()
+THEMES = {
+        "Light": {"bg": "white", "fg": "black", "entry_bg": "white", "entry_fg": "black"},
+        "Dark": {"bg": "#2E2E2E", "fg": "white", "entry_bg": "#3E3E3E", "entry_fg": "white"},
+    }
+
+try:
+    # Ensure themes.json file exists
+    if not os.path.exists(THEME_FILE) or os.stat(THEME_FILE).st_size == 0:
+        with open(THEME_FILE, "w") as file:
+            json.dump(THEMES, file, indent=4)
+
+    # Load existing themes
+    with open(THEME_FILE, "r") as file:
+        try:
+            data = json.load(file)  # Try to read JSON
+        except json.JSONDecodeError:
+            data = THEMES  # If file is empty or corrupted, reset data
+            with open(THEME_FILE, "w") as file:
+                json.dump(data, file, indent=4)
+
+    # Ensure required themes exist
+    if "Light" not in data or "Dark" not in data:
+        data.update(THEMES)
+
+        # Save updated themes
+        with open(THEME_FILE, "w") as file:
+            json.dump(data, file, indent=4)
+
+    THEMES = data  # Update global THEMES with loaded data
+except:
+    pass
+
+current_theme = "Dark"
+
 if __name__ == "__main__":
     client_socket, my_username = connect_to_server()
     create_gui(client_socket)
+    # Load themes from file
