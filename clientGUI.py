@@ -3,7 +3,7 @@ import sys
 import threading
 import select
 import tkinter as tk
-from tkinter import scrolledtext, Toplevel
+from tkinter import scrolledtext, Toplevel, simpledialog
 
 HEADER_LENGTH = 10
 
@@ -25,15 +25,30 @@ def open_theme_selector(window, text_area, entry_widget, send_button):
     global current_theme
     theme_window = Toplevel(window)
     theme_window.title("Select Theme")
-    theme_window.geometry("200x100")
+    theme_window.geometry("250x200")
     
     for theme in THEMES.keys():
         tk.Button(theme_window, text=theme, command=lambda t=theme: set_theme(t, window, text_area, entry_widget, send_button)).pack(pady=5)
+    
+    tk.Button(theme_window, text="Create Custom Theme", command=lambda: create_custom_theme(window, text_area, entry_widget, send_button)).pack(pady=10)
 
 def set_theme(theme, window, text_area, entry_widget, send_button):
     global current_theme
     current_theme = theme
     apply_theme(window, text_area, entry_widget, send_button)
+
+def create_custom_theme(window, text_area, entry_widget, send_button):
+    theme_name = simpledialog.askstring("Custom Theme", "Enter theme name:")
+    if not theme_name:
+        return
+    
+    bg_color = simpledialog.askstring("Custom Theme", "Enter background color (hex or name):")
+    fg_color = simpledialog.askstring("Custom Theme", "Enter text color (hex or name):")
+    entry_bg_color = simpledialog.askstring("Custom Theme", "Enter entry background color (hex or name):")
+    entry_fg_color = simpledialog.askstring("Custom Theme", "Enter entry text color (hex or name):")
+    
+    THEMES[theme_name] = {"bg": bg_color, "fg": fg_color, "entry_bg": entry_bg_color, "entry_fg": entry_fg_color}
+    set_theme(theme_name, window, text_area, entry_widget, send_button)
 
 def connect_to_server():
     while True:
