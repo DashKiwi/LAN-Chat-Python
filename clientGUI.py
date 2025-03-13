@@ -1,14 +1,40 @@
 import socket
 import sys
 import threading
-import os
 import select
 import tkinter as tk
-from tkinter import scrolledtext
+from tkinter import scrolledtext, Toplevel
 
 HEADER_LENGTH = 10
 
-# Function to create a socket connection
+# Themes
+THEMES = {
+    "Light": {"bg": "white", "fg": "black", "entry_bg": "white", "entry_fg": "black"},
+    "Dark": {"bg": "#2E2E2E", "fg": "white", "entry_bg": "#3E3E3E", "entry_fg": "white"},
+}
+current_theme = "Light"
+
+def apply_theme(window, text_area, entry_widget, send_button):
+    theme = THEMES[current_theme]
+    window.configure(bg=theme["bg"])
+    text_area.config(bg=theme["bg"], fg=theme["fg"])
+    entry_widget.config(bg=theme["entry_bg"], fg=theme["entry_fg"])
+    send_button.config(bg=theme["entry_bg"], fg=theme["entry_fg"])
+
+def open_theme_selector(window, text_area, entry_widget, send_button):
+    global current_theme
+    theme_window = Toplevel(window)
+    theme_window.title("Select Theme")
+    theme_window.geometry("200x100")
+    
+    for theme in THEMES.keys():
+        tk.Button(theme_window, text=theme, command=lambda t=theme: set_theme(t, window, text_area, entry_widget, send_button)).pack(pady=5)
+
+def set_theme(theme, window, text_area, entry_widget, send_button):
+    global current_theme
+    current_theme = theme
+    apply_theme(window, text_area, entry_widget, send_button)
+
 def connect_to_server():
     while True:
         try:
@@ -43,27 +69,26 @@ def receive_messages(client_socket, text_area):
                 if not len(time_header):
                     print("Connection closed by the server")
                     sys.exit()
-
+                
                 time_length = int(time_header.decode('utf-8').strip())
                 time = client_socket.recv(time_length).decode('utf-8')
-
+                
                 username_header = client_socket.recv(HEADER_LENGTH)
                 if not len(username_header):
                     print("Connection closed by the server")
                     sys.exit()
-
+                
                 username_length = int(username_header.decode('utf-8').strip())
                 username = client_socket.recv(username_length).decode('utf-8')
-
+                
                 message_header = client_socket.recv(HEADER_LENGTH)
                 message_length = int(message_header.decode('utf-8').strip())
                 message = client_socket.recv(message_length).decode('utf-8')
-
+                
                 text_area.config(state=tk.NORMAL)  # Allow editing
                 text_area.insert(tk.END, f"\n{time} {username} > {message}")
                 text_area.yview(tk.END)  # Auto-scroll to the bottom
                 text_area.config(state=tk.DISABLED)  # Disable editing
-
         except BlockingIOError:
             continue
         except Exception as e:
@@ -79,13 +104,12 @@ def send_message(client_socket, entry_widget, text_area):
             message_encoded = message.encode('utf-8')
             message_header = f"{len(message_encoded):<{HEADER_LENGTH}}".encode('utf-8')
             client_socket.send(message_header + message_encoded)
-
+            
             # Display the sent message in the message box
             text_area.config(state=tk.NORMAL)
             text_area.insert(tk.END, f"\nYou > {message}")
             text_area.yview(tk.END)
             text_area.config(state=tk.DISABLED)
-
             # Clear the text entry after sending
             entry_widget.delete(0, tk.END)  
         except Exception as e:
@@ -98,7 +122,7 @@ def create_gui(client_socket):
     
     # Create message display box
     text_area = scrolledtext.ScrolledText(window, width=50, height=15, wrap=tk.WORD, state=tk.DISABLED)
-    text_area.grid(row=0, column=0, padx=10, pady=10)
+    text_area.grid(row=0, column=0, columnspan=2, padx=10, pady=10)
     
     # Create message entry box
     entry_widget = tk.Entry(window, width=40)
@@ -110,8 +134,13 @@ def create_gui(client_socket):
     
     # Bind Enter key to send message
     entry_widget.bind('<Return>', lambda event: send_message(client_socket, entry_widget, text_area))
-
+    
     # Start receiving messages in a separate thread
+    theme_button = tk.Button(window, text="Change Theme", command=lambda: open_theme_selector(window, text_area, entry_widget, send_button))
+    theme_button.grid(row=2, column=0, columnspan=2, pady=5)
+    
+    apply_theme(window, text_area, entry_widget, send_button)
+    
     receive_thread = threading.Thread(target=receive_messages, args=(client_socket, text_area), daemon=True)
     receive_thread.start()
     
