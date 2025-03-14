@@ -130,6 +130,7 @@ def import_themes(window, text_area, entry_widget, send_button):
     if file_path:
         with open(file_path, "r") as file:
             imported_themes = json.load(file)
+            imported_themes.pop("Selected_theme", None)     
             THEMES.update(imported_themes)
             save_themes()
             
