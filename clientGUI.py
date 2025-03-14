@@ -62,7 +62,8 @@ def open_theme_selector(window, text_area, entry_widget, send_button):
     
     # Add the theme buttons to the button_frame
     for theme in THEMES.keys():
-        tk.Button(button_frame, text=theme, command=lambda t=theme: set_theme(t, window, text_area, entry_widget, send_button)).pack(pady=5)
+        if theme != "Selected_theme":
+            tk.Button(button_frame, text=theme, command=lambda t=theme: set_theme(t, window, text_area, entry_widget, send_button)).pack(pady=5)
     
     # Add the custom theme, export, and import buttons
     tk.Button(button_frame, text="Create Custom Theme", command=lambda: create_custom_theme(window, text_area, entry_widget, send_button)).pack(pady=5)
@@ -80,6 +81,9 @@ def open_theme_selector(window, text_area, entry_widget, send_button):
 def set_theme(theme, window, text_area, entry_widget, send_button):
     global current_theme
     current_theme = theme
+    THEMES["Selected_theme"] = theme
+    with open(THEME_FILE, "w") as file:
+        json.dump(THEMES, file, indent=4)
     apply_theme(window, text_area, entry_widget, send_button)
     save_themes()
 
@@ -255,6 +259,7 @@ set_path()
 THEMES = {
         "Light": {"bg": "white", "fg": "black", "entry_bg": "white", "entry_fg": "black"},
         "Dark": {"bg": "#2E2E2E", "fg": "white", "entry_bg": "#3E3E3E", "entry_fg": "white"},
+        "Selected_theme": "Dark"
     }
 
 try:
@@ -284,7 +289,7 @@ try:
 except:
     pass
 
-current_theme = "Dark"
+current_theme = THEMES["Selected_theme"]
 
 if __name__ == "__main__":
     client_socket, my_username = connect_to_server()
