@@ -144,28 +144,20 @@ def import_themes(window, text_area, entry_widget, send_button):
             # Open the theme selector again with the updated list
             open_theme_selector(window, text_area, entry_widget, send_button)
 
-def connect_to_server():
-    while True:
-        try:
-            IP = input("Please enter an IP: ")
-            PORT = int(input("Please enter a PORT: "))
+def connect_to_server(ip, port, username):
+    try:
+        client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        client_socket.settimeout(5)
+        client_socket.connect((ip, port))
+        client_socket.setblocking(False)
+        
+        username_encoded = username.encode('utf-8')
+        username_header = f"{len(username_encoded):<{HEADER_LENGTH}}".encode('utf-8')
+        client_socket.send(username_header + username_encoded)
 
-            client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            client_socket.connect((IP, PORT))
-            client_socket.setblocking(False)
-            print(f"Connected to server on {IP}:{PORT}")
-            break
-        except Exception as e:
-            print(f"Please try again. Server not found! Error: {e}")
-
-    # Get username
-    my_username = input("Username: ")
-    username = my_username.encode('utf-8')
-    username_header = f"{len(username):<{HEADER_LENGTH}}".encode('utf-8')
-    client_socket.send(username_header + username)
-    print(f"Connected to server with username {my_username}")
-    
-    return client_socket, my_username
+        return client_socket
+    except:
+        return(f"Please try again. Server Unresponsive!")
 
 # Receive messages and display them in the GUI's text area
 def receive_messages(client_socket, text_area):
@@ -223,6 +215,55 @@ def send_message(client_socket, entry_widget, text_area):
             entry_widget.delete(0, tk.END)  
         except Exception as e:
             print(f"Error sending message: {e}")
+
+def try_connect(ip_entry, port_entry, username_entry, error_label, root):
+        error_label.config(text="Checking Fields", fg="red")
+        ip = ip_entry.get().strip()
+        port = port_entry.get().strip()
+        username = username_entry.get().strip()
+
+        if not ip or not port or not username:
+            error_label.config(text="All fields are required!", fg="red")
+            return
+
+        try:
+            port = int(port)
+            if port <= 0 or port > 65535:
+                raise ValueError("Invalid port number.")
+
+            connection_result = connect_to_server(ip, port, username)
+            if isinstance(connection_result, str):  # If it's an error message
+                error_label.config(text=f"Error: {connection_result}", fg="red")
+            else:
+                root.destroy()  # Close the connection window
+                create_gui(connection_result)  # Start chat GUI
+
+        except ValueError as e:
+            error_label.config(text=f"Error: {e}", fg="red")
+
+def show_connection_window():
+    root = tk.Tk()
+    root.title("Connect to Server")
+
+    tk.Label(root, text="IP Address:").grid(row=0, column=0, padx=5, pady=5, sticky="w")
+    ip_entry = tk.Entry(root, width=30)
+    ip_entry.grid(row=0, column=1, padx=5, pady=5)
+
+    tk.Label(root, text="Port:").grid(row=1, column=0, padx=5, pady=5, sticky="w")
+    port_entry = tk.Entry(root, width=30)
+    port_entry.grid(row=1, column=1, padx=5, pady=5)
+
+    tk.Label(root, text="Username:").grid(row=2, column=0, padx=5, pady=5, sticky="w")
+    username_entry = tk.Entry(root, width=30)
+    username_entry.grid(row=2, column=1, padx=5, pady=5)
+
+    error_label = tk.Label(root, text="", fg="red")
+    error_label.grid(row=4, column=0, columnspan=2)
+
+    connect_button = tk.Button(root, text="Connect", command=lambda: try_connect(ip_entry, port_entry, username_entry, error_label, root))
+    connect_button.grid(row=3, column=0, columnspan=2, pady=10)
+
+    root.mainloop()
 
 # Create the Tkinter window and its components
 def create_gui(client_socket):
@@ -293,6 +334,7 @@ except:
 current_theme = THEMES["Selected_theme"]
 
 if __name__ == "__main__":
-    client_socket, my_username = connect_to_server()
-    create_gui(client_socket)
+    #client_socket, my_username = connect_to_server()
+    #create_gui(client_socket)
     # Load themes from file
+    show_connection_window()
