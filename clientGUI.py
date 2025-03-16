@@ -8,6 +8,9 @@ import os
 from tkinter import scrolledtext, Toplevel, simpledialog, filedialog
 
 current_theme_window = None
+ip_entry = None
+port_entry = None
+username_entry = None
 
 HEADER_LENGTH = 10
 
@@ -243,19 +246,21 @@ def try_connect(ip_entry, port_entry, username_entry, error_label, root):
             error_label.config(text=f"Error: {e}", fg="red")
 
 def show_connection_window():
+    global ip_entry, port_entry, username_entry  # Mark as global
+
     root = tk.Tk()
     root.title("Connect to Server")
 
     tk.Label(root, text="IP Address:").grid(row=0, column=0, padx=5, pady=5, sticky="w")
-    ip_entry = tk.Entry(root, width=30)
+    ip_entry = tk.Entry(root, width=30)  # Assign to global variable
     ip_entry.grid(row=0, column=1, padx=5, pady=5)
 
     tk.Label(root, text="Port:").grid(row=1, column=0, padx=5, pady=5, sticky="w")
-    port_entry = tk.Entry(root, width=30)
+    port_entry = tk.Entry(root, width=30)  # Assign to global variable
     port_entry.grid(row=1, column=1, padx=5, pady=5)
 
     tk.Label(root, text="Username:").grid(row=2, column=0, padx=5, pady=5, sticky="w")
-    username_entry = tk.Entry(root, width=30)
+    username_entry = tk.Entry(root, width=30)  # Assign to global variable
     username_entry.grid(row=2, column=1, padx=5, pady=5)
 
     error_label = tk.Label(root, text="", fg="red")
@@ -264,12 +269,12 @@ def show_connection_window():
     connect_button = tk.Button(root, text="Connect", command=lambda: try_connect(ip_entry, port_entry, username_entry, error_label, root))
     connect_button.grid(row=3, column=0, columnspan=2, pady=10)
 
-    prev_connections_button = tk.Button(root, text="Previous Connections", command=lambda: open_previous_connections(root, ip_entry, port_entry, username_entry))
-    prev_connections_button.grid(row=5, column=0, columnspan=2, pady=5)
+    prev_connections_button = tk.Button(root, text="Previous Connections", command=lambda: open_previous_connections(root))
+    prev_connections_button.grid(row=4, column=0, columnspan=2, pady=5)
 
     root.mainloop()
 
-def open_previous_connections(parent, ip_entry, port_entry, username_entry):
+def open_previous_connections(parent):
     prev_window = Toplevel(parent)
     prev_window.title("Previous Connections")
     prev_window.geometry("300x300")
@@ -282,7 +287,7 @@ def open_previous_connections(parent, ip_entry, port_entry, username_entry):
     for server in servers:
         server_listbox.insert(tk.END, f"{server['name']} ({server['ip']}:{server['port']})")
 
-    join_button = tk.Button(prev_window, text="Join Server", command=lambda: join_selected(server_listbox, servers, ip_entry, port_entry, username_entry, prev_window))
+    join_button = tk.Button(prev_window, text="Join Server", command=lambda: join_selected(server_listbox, servers, prev_window))
     join_button.pack(pady=5)
 
     add_button = tk.Button(prev_window, text="Add Server", command=lambda: add_edit_server_window(servers, prev_window))
@@ -291,7 +296,9 @@ def open_previous_connections(parent, ip_entry, port_entry, username_entry):
     edit_button = tk.Button(prev_window, text="Edit Server", command=lambda: edit_selected(server_listbox, servers, prev_window))
     edit_button.pack(pady=5)
 
-def join_selected(server_listbox, servers, ip_entry, port_entry, username_entry, prev_window):
+def join_selected(server_listbox, servers, prev_window):
+    global ip_entry, port_entry, username_entry
+
     selection = server_listbox.curselection()
     if selection:
         selected = servers[selection[0]]
@@ -347,7 +354,7 @@ def save_server(servers, index, name_entry, ip_entry, port_entry, window, parent
     window.destroy()
     if parent.winfo_exists():  # Check if parent still exists before destroying
         parent.destroy()
-    open_previous_connections(parent.master, None, None, None)  # Use parent.master instead
+    open_previous_connections(parent.master)
 
 def delete_server(servers, index, window, parent):
     del servers[index]
@@ -356,7 +363,6 @@ def delete_server(servers, index, window, parent):
     if parent.winfo_exists():
         parent.destroy()
     open_previous_connections(parent.master, None, None, None)
-
 
 def load_saved_servers():
     if os.path.exists(SERVERS_FILE):
