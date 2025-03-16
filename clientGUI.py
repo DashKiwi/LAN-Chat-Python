@@ -12,7 +12,7 @@ current_theme_window = None
 HEADER_LENGTH = 10
 
 def set_path():
-    global application_path, THEME_FILE
+    global application_path, THEME_FILE, SERVERS_FILE
     if getattr(sys, 'frozen', False):
         # Running as a packaged executable
         application_path = os.path.dirname(sys.executable)
@@ -20,6 +20,7 @@ def set_path():
         # Running as a Python script
         application_path = os.path.dirname(__file__)
     THEME_FILE = os.path.join(application_path, "themes.json")
+    SERVERS_FILE = os.path.join(application_path, "servers.json")
 
 def save_themes():
     global THEME_FILE
@@ -263,7 +264,112 @@ def show_connection_window():
     connect_button = tk.Button(root, text="Connect", command=lambda: try_connect(ip_entry, port_entry, username_entry, error_label, root))
     connect_button.grid(row=3, column=0, columnspan=2, pady=10)
 
+    prev_connections_button = tk.Button(root, text="Previous Connections", command=lambda: open_previous_connections(root, ip_entry, port_entry, username_entry))
+    prev_connections_button.grid(row=5, column=0, columnspan=2, pady=5)
+
     root.mainloop()
+
+def open_previous_connections(parent, ip_entry, port_entry, username_entry):
+    prev_window = Toplevel(parent)
+    prev_window.title("Previous Connections")
+    prev_window.geometry("300x300")
+
+    servers = load_saved_servers()
+    
+    server_listbox = tk.Listbox(prev_window, width=40, height=10)
+    server_listbox.pack(pady=10)
+
+    for server in servers:
+        server_listbox.insert(tk.END, f"{server['name']} ({server['ip']}:{server['port']})")
+
+    join_button = tk.Button(prev_window, text="Join Server", command=lambda: join_selected(server_listbox, servers, ip_entry, port_entry, username_entry, prev_window))
+    join_button.pack(pady=5)
+
+    add_button = tk.Button(prev_window, text="Add Server", command=lambda: add_edit_server_window(servers, prev_window))
+    add_button.pack(pady=5)
+
+    edit_button = tk.Button(prev_window, text="Edit Server", command=lambda: edit_selected(server_listbox, servers, prev_window))
+    edit_button.pack(pady=5)
+
+def join_selected(server_listbox, servers, ip_entry, port_entry, username_entry, prev_window):
+    selection = server_listbox.curselection()
+    if selection:
+        selected = servers[selection[0]]
+        ip_entry.delete(0, tk.END)
+        ip_entry.insert(0, selected["ip"])
+        port_entry.delete(0, tk.END)
+        port_entry.insert(0, selected["port"])
+        username_entry.delete(0, tk.END)
+        username_entry.insert(0, selected["name"])
+        prev_window.destroy()
+
+def edit_selected(server_listbox, servers, parent):
+    selection = server_listbox.curselection()
+    if selection:
+        add_edit_server_window(servers, parent, selection[0])
+
+def add_edit_server_window(servers, parent, index=None):
+    add_edit_window = Toplevel(parent)
+    add_edit_window.title("Add/Edit Server")
+    add_edit_window.geometry("250x200")
+
+    tk.Label(add_edit_window, text="IP Address:").pack()
+    ip_entry = tk.Entry(add_edit_window)
+    ip_entry.pack()
+
+    tk.Label(add_edit_window, text="Port:").pack()
+    port_entry = tk.Entry(add_edit_window)
+    port_entry.pack()
+
+    tk.Label(add_edit_window, text="Username:").pack()
+    name_entry = tk.Entry(add_edit_window)
+    name_entry.pack()
+
+    if index is not None:
+        ip_entry.insert(0, servers[index]["ip"])
+        port_entry.insert(0, servers[index]["port"])
+        name_entry.insert(0, servers[index]["name"])
+
+    save_button = tk.Button(add_edit_window, text="Save", command=lambda: save_server(servers, index, name_entry, ip_entry, port_entry, add_edit_window, parent))
+    save_button.pack(pady=5)
+
+    if index is not None:
+        delete_button = tk.Button(add_edit_window, text="Delete", command=lambda: delete_server(servers, index, add_edit_window, parent))
+        delete_button.pack(pady=5)
+
+def save_server(servers, index, name_entry, ip_entry, port_entry, window, parent):
+    new_server = {"name": name_entry.get(), "ip": ip_entry.get(), "port": port_entry.get()}
+    if index is None:
+        servers.append(new_server)
+    else:
+        servers[index] = new_server
+    save_servers(servers)
+    window.destroy()
+    if parent.winfo_exists():  # Check if parent still exists before destroying
+        parent.destroy()
+    open_previous_connections(parent.master, None, None, None)  # Use parent.master instead
+
+def delete_server(servers, index, window, parent):
+    del servers[index]
+    save_servers(servers)
+    window.destroy()
+    if parent.winfo_exists():
+        parent.destroy()
+    open_previous_connections(parent.master, None, None, None)
+
+
+def load_saved_servers():
+    if os.path.exists(SERVERS_FILE):
+        with open(SERVERS_FILE, "r") as file:
+            try:
+                return json.load(file)
+            except json.JSONDecodeError:
+                return []
+    return []
+
+def save_servers(servers):
+    with open(SERVERS_FILE, "w") as file:
+        json.dump(servers, file, indent=4)
 
 # Create the Tkinter window and its components
 def create_gui(client_socket):
