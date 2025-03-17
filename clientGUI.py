@@ -152,7 +152,7 @@ def import_themes(window, text_area, entry_widget, send_button):
 def connect_to_server(ip, port, username):
     try:
         client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        client_socket.settimeout(5)
+        client_socket.settimeout(2)
         client_socket.connect((ip, port))
         client_socket.setblocking(False)
         
@@ -259,7 +259,7 @@ def show_connection_window():
     username_entry.grid(row=2, column=1, padx=5, pady=5)
 
     error_label = tk.Label(root, text="", fg="red")
-    error_label.grid(row=4, column=0, columnspan=2)
+    error_label.grid(row=5, column=0, columnspan=2)
 
     connect_button = tk.Button(root, text="Connect", command=lambda: try_connect(ip_entry, port_entry, username_entry, error_label, root))
     connect_button.grid(row=3, column=0, columnspan=2, pady=10)
