@@ -61,11 +61,8 @@ while True:
 
             # Notify all other clients that a new client has joined
             join_message = "[Client has joined]"
-            current_time = time.strftime("%H:%M")
             
-            # Prepare the message with time, username, and join message
-            time_str = current_time.encode('utf-8')
-            time_header = f"{len(time_str):<{HEADER_LENGTH}}".encode('utf-8')
+            # Prepare the message with username, and join message
             username_str = user["data"]
             username_header = f"{len(username_str):<{HEADER_LENGTH}}".encode('utf-8')
             message_encoded = join_message.encode('utf-8')
@@ -74,7 +71,7 @@ while True:
             # Send the join message to all clients (except the new one)
             for client_socket in clients:
                 if client_socket != notified_socket:
-                    client_socket.send(time_header + time_str + username_header + username_str + message_header + message_encoded)
+                    client_socket.send(username_header + username_str + message_header + message_encoded)
 
         else:
             message = receive_message(notified_socket)
@@ -82,11 +79,8 @@ while True:
                 # Handle client disconnection
                 user = clients[notified_socket]
                 disconnect_message = "[Client has disconnected]"
-                current_time = time.strftime("%H:%M")
                 
                 # Prepare the message with time, username, and disconnect message
-                time_str = current_time.encode('utf-8')
-                time_header = f"{len(time_str):<{HEADER_LENGTH}}".encode('utf-8')
                 username_str = user["data"]
                 username_header = f"{len(username_str):<{HEADER_LENGTH}}".encode('utf-8')
                 message_encoded = disconnect_message.encode('utf-8')
@@ -95,7 +89,7 @@ while True:
                 # Send the message to all clients (except the disconnected one)
                 for client_socket in clients:
                     if client_socket != notified_socket:
-                        client_socket.send(time_header + time_str + username_header + username_str + message_header + message_encoded)
+                        client_socket.send(username_header + username_str + message_header + message_encoded)
                 
                 print("Closed connection from: {}".format(user["data"].decode("utf-8")))
                 sockets_list.remove(notified_socket)
@@ -105,9 +99,7 @@ while True:
             print(f"Received message from {user['data'].decode('utf-8')}: {message['data'].decode('utf-8')}")
             for client_socket in clients:
                 if client_socket != notified_socket:
-                    time_str = str(time.strftime("%H:%M")).encode('utf-8')
-                    time_header = f"{len(time_str):<{HEADER_LENGTH}}".encode('utf-8')
-                    message_to_send = time_header + time_str + user["header"] + user["data"] + message["header"] + message["data"]
+                    message_to_send = user["header"] + user["data"] + message["header"] + message["data"]
                     client_socket.send(message_to_send)
 
     for notified_socket in exception_sockets:

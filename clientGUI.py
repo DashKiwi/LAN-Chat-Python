@@ -5,6 +5,7 @@ import select
 import tkinter as tk
 import json
 import os
+import time
 from tkinter import scrolledtext, Toplevel, simpledialog, filedialog
 
 current_theme_window = None
@@ -170,14 +171,6 @@ def receive_messages(client_socket, text_area):
             ready_to_read, _, _ = select.select([client_socket], [], [], 0.1)
             if ready_to_read:
                 # Try receiving data
-                time_header = client_socket.recv(HEADER_LENGTH)
-                if not len(time_header):
-                    print("Connection closed by the server")
-                    sys.exit()
-                
-                time_length = int(time_header.decode('utf-8').strip())
-                time = client_socket.recv(time_length).decode('utf-8')
-                
                 username_header = client_socket.recv(HEADER_LENGTH)
                 if not len(username_header):
                     print("Connection closed by the server")
@@ -190,8 +183,10 @@ def receive_messages(client_socket, text_area):
                 message_length = int(message_header.decode('utf-8').strip())
                 message = client_socket.recv(message_length).decode('utf-8')
                 
+                local_time = time.strftime("%H:%M")
+
                 text_area.config(state=tk.NORMAL)  # Allow editing
-                text_area.insert(tk.END, f"\n{time} {username} > {message}")
+                text_area.insert(tk.END, f"\n{local_time} {username} > {message}")
                 text_area.yview(tk.END)  # Auto-scroll to the bottom
                 text_area.config(state=tk.DISABLED)  # Disable editing
         except BlockingIOError:
