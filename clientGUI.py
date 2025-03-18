@@ -195,6 +195,25 @@ def receive_messages(client_socket, text_area):
             print(f"Error receiving message: {e}")
             break
 
+def send_media(client_socket, file_path, media_type):
+    try:
+        with open(file_path, "rb") as f:
+            file_data = f.read()
+        
+        # Add prefix to indicate file type
+        prefix = b'IMG:' if media_type == "image" else b'GIF:'
+        message = prefix + file_data
+        
+        # Create message header
+        message_header = f"{len(message):<{HEADER_LENGTH}}".encode('utf-8')
+        
+        # Send header + data
+        client_socket.send(message_header + message)
+        print(f"Sent {media_type} file: {os.path.basename(file_path)}")
+    
+    except Exception as e:
+        print(f"Error sending file: {e}")
+
 # Send messages from the GUI text box
 def send_message(client_socket, entry_widget, text_area):
     message = entry_widget.get()
