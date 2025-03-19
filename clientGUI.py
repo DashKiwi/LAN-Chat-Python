@@ -7,6 +7,7 @@ import json
 import os
 import time
 from tkinter import scrolledtext, Toplevel, simpledialog, filedialog
+from PIL import Image, ImageTk
 
 current_theme_window = None
 ip_entry = None
@@ -161,8 +162,8 @@ def connect_to_server(ip, port, username):
         client_socket.send(username_header + username_encoded)
 
         return client_socket
-    except:
-        return(f"Please try again. Server Unresponsive!")
+    except Exception as e:
+        return str(e)
 
 # Receive messages and display them in the GUI's text area
 def receive_messages(client_socket, text_area):
@@ -170,30 +171,67 @@ def receive_messages(client_socket, text_area):
         try:
             ready_to_read, _, _ = select.select([client_socket], [], [], 0.1)
             if ready_to_read:
-                # Try receiving data
+                # Receive username header
                 username_header = client_socket.recv(HEADER_LENGTH)
                 if not len(username_header):
                     print("Connection closed by the server")
                     sys.exit()
-                
+
                 username_length = int(username_header.decode('utf-8').strip())
                 username = client_socket.recv(username_length).decode('utf-8')
-                
+
+                # Receive message header
                 message_header = client_socket.recv(HEADER_LENGTH)
                 message_length = int(message_header.decode('utf-8').strip())
                 message = client_socket.recv(message_length).decode('utf-8')
-                
-                local_time = time.strftime("%H:%M")
 
-                text_area.config(state=tk.NORMAL)  # Allow editing
-                text_area.insert(tk.END, f"\n{local_time} {username} > {message}")
-                text_area.yview(tk.END)  # Auto-scroll to the bottom
-                text_area.config(state=tk.DISABLED)  # Disable editing
+                if message.startswith('IMG:') or message.startswith('GIF:'):
+                    # It's a media file, extract and display it
+                    media_type = "Image" if message.startswith('IMG:') else "GIF"
+                    media_data = message[4:]
+                    media_image = Image.open(io.BytesIO(media_data))
+                    
+                    # Display media in the message box
+                    text_area.config(state=tk.NORMAL)
+                    text_area.insert(tk.END, f"\n{time.strftime('%H:%M')} {username} > Sent a {media_type} file:\n")
+                    text_area.image_create(tk.END, image=ImageTk.PhotoImage(media_image))
+                    text_area.yview(tk.END)
+                    text_area.config(state=tk.DISABLED)
+                else:
+                    # Regular text message
+                    text_area.config(state=tk.NORMAL)
+                    text_area.insert(tk.END, f"\n{time.strftime('%H:%M')} {username} > {message}")
+                    text_area.yview(tk.END)
+                    text_area.config(state=tk.DISABLED)
+
         except BlockingIOError:
             continue
         except Exception as e:
             print(f"Error receiving message: {e}")
             break
+
+def send_media_from_gui(client_socket, text_area):
+    # Open a file dialog to select a file to send
+    file_path = filedialog.askopenfilename(filetypes=[("Image Files", "*.png;*.jpg;*.jpeg;*.gif"), ("All Files", "*.*")])
+    
+    if file_path:
+        # Check the file type based on the extension
+        if file_path.lower().endswith(('.png', '.jpg', '.jpeg')):
+            media_type = "image"
+        elif file_path.lower().endswith('.gif'):
+            media_type = "gif"
+        else:
+            print("Unsupported file type")
+            return
+        
+        # Send the file to the server
+        send_media(client_socket, file_path, media_type)
+        
+        # Display the file sending message in the chat area
+        text_area.config(state=tk.NORMAL)
+        text_area.insert(tk.END, f"\nYou > Sent a {media_type} file: {os.path.basename(file_path)}")
+        text_area.yview(tk.END)
+        text_area.config(state=tk.DISABLED)
 
 def send_media(client_socket, file_path, media_type):
     try:
@@ -408,12 +446,16 @@ def create_gui(client_socket):
     send_button = tk.Button(window, text="Send", width=10, command=lambda: send_message(client_socket, entry_widget, text_area))
     send_button.grid(row=1, column=1, padx=10, pady=10)
     
+    # Button to send media
+    send_media_button = tk.Button(window, text="Send Media", width=10, command=lambda: send_media_from_gui(client_socket, text_area))
+    send_media_button.grid(row=2, column=0, columnspan=2, pady=5)
+    
     # Bind Enter key to send message
     entry_widget.bind('<Return>', lambda event: send_message(client_socket, entry_widget, text_area))
     
     # Start receiving messages in a separate thread
     theme_button = tk.Button(window, text="Change Theme", command=lambda: open_theme_selector(window, text_area, entry_widget, send_button))
-    theme_button.grid(row=2, column=0, columnspan=2, pady=5)
+    theme_button.grid(row=3, column=0, columnspan=2, pady=5)
     
     apply_theme(window, text_area, entry_widget, send_button)
     

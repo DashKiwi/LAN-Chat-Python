@@ -58,6 +58,7 @@ def send_media_to_all_clients(sender_socket, media_data, media_header, media_typ
     for client_socket in clients:
         if client_socket != sender_socket:
             prefix = b'IMG:' if media_type == "image" else b'GIF:'
+            prefix = f"{prefix}".encode('utf-8')
             client_socket.send(media_header + prefix + media_data)
 
 while True:
@@ -115,7 +116,7 @@ while True:
                 media_header = f"{len(media_data):<{HEADER_LENGTH}}".encode('utf-8')
                 
                 # Send the media data to all other clients
-                send_media_to_all_clients(notified_socket, media_data, media_header)
+                send_media_to_all_clients(notified_socket, media_data, media_header, media_type)
 
             else:
                 # If it's a regular text message
