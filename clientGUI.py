@@ -6,7 +6,7 @@ import tkinter as tk
 import json
 import os
 import time
-from tkinter import scrolledtext, Toplevel, simpledialog, filedialog
+from tkinter import scrolledtext, Toplevel, simpledialog, filedialog, colorchooser
 
 current_theme_window = None
 ip_entry = None
@@ -109,37 +109,59 @@ def set_theme(theme, window, text_area, entry_widget, buttons):
     current_theme = theme
     save_themes()
     apply_theme(window, text_area=[text_area], entry_widget=[entry_widget], buttons=[*buttons])
+    if current_theme_window:
+        open_theme_selector(window, text_area, entry_widget, buttons) #updates theme selector.
 
-def create_custom_theme(window, text_area, entry_widget, buttons):
-    theme_name = simpledialog.askstring("Custom Theme", "Enter theme name:")
-    if not theme_name:
-        return
-    
-    bg_color = simpledialog.askstring("Custom Theme", "Enter background color (hex or name):")
-    if not bg_color:
-        return
-    fg_color = simpledialog.askstring("Custom Theme", "Enter text color (hex or name):")
-    if not fg_color:
-        return
-    entry_bg_color = simpledialog.askstring("Custom Theme", "Enter entry background color (hex or name):")
-    if not entry_bg_color:
-        return
-    entry_fg_color = simpledialog.askstring("Custom Theme", "Enter entry text color (hex or name):")
-    if not entry_fg_color:
-        return
-    
-    THEMES[theme_name] = {
-        "bg": bg_color,
-        "fg": fg_color,
-        "entry_bg": entry_bg_color,
-        "entry_fg": entry_fg_color
-    }
-    
-    save_themes()
-    set_theme(theme_name, window, text_area, entry_widget, buttons)
+def create_custom_theme(window, text_area, entry_widget, send_button):
+    custom_window = Toplevel(window)
+    custom_window.title("Create Custom Theme")
+    custom_window.geometry("300x250")
 
-    # Update theme selector to include the new theme
-    open_theme_selector(window, text_area, entry_widget, buttons)
+    name_label = tk.Label(custom_window, text="Theme Name:")
+    name_label.grid(row=0, column=0, sticky="w")
+    name_entry = tk.Entry(custom_window)
+    name_entry.grid(row=0, column=1)
+
+    bg_label = tk.Label(custom_window, text="Background Color:")
+    bg_label.grid(row=1, column=0, sticky="w")
+    bg_button = tk.Button(custom_window, text="Select Color", command=lambda: choose_color(custom_window, "bg", bg_button))
+    bg_button.grid(row=1, column=1)
+
+    fg_label = tk.Label(custom_window, text="Foreground Color:")
+    fg_label.grid(row=2, column=0, sticky="w")
+    fg_button = tk.Button(custom_window, text="Select Color", command=lambda: choose_color(custom_window, "fg", fg_button))
+    fg_button.grid(row=2, column=1)
+
+    entry_bg_label = tk.Label(custom_window, text="Entry Background Color:")
+    entry_bg_label.grid(row=3, column=0, sticky="w")
+    entry_bg_button = tk.Button(custom_window, text="Select Color", command=lambda: choose_color(custom_window, "entry_bg", entry_bg_button))
+    entry_bg_button.grid(row=3, column=1)
+
+    entry_fg_label = tk.Label(custom_window, text="Entry Foreground Color:")
+    entry_fg_label.grid(row=4, column=0, sticky="w")
+    entry_fg_button = tk.Button(custom_window, text="Select Color", command=lambda: choose_color(custom_window, "entry_fg", entry_fg_button))
+    entry_fg_button.grid(row=4, column=1)
+
+    save_button = tk.Button(custom_window, text="Save Theme", command=lambda: save_custom_theme(custom_window, name_entry.get(), bg_button["bg"], fg_button["fg"], entry_bg_button["bg"], entry_fg_button["fg"], window, text_area, entry_widget, send_button))
+    save_button.grid(row=5, column=0, columnspan=2, pady=10)
+
+    apply_theme(custom_window, buttons=[bg_button, fg_button, entry_bg_button, entry_fg_button, save_button], entry_widget=[name_entry], text=[name_label, bg_label, fg_label, entry_bg_label, entry_fg_label])
+
+def choose_color(window, color_type, button):
+    color = colorchooser.askcolor()[1]
+    if color:
+        button.config(bg=color, fg="black") # sets the button background to the selected color
+        window.update_idletasks() # update the window to show color change right away
+
+def save_custom_theme(custom_window, name, bg, fg, entry_bg, entry_fg, window, text_area, entry_widget, send_button):
+    if name and bg and fg and entry_bg and entry_fg:
+        THEMES[name] = {"bg": bg, "fg": fg, "entry_bg": entry_bg, "entry_fg": entry_fg}
+        save_themes()
+        set_theme(name, window, text_area, entry_widget, send_button)
+        custom_window.destroy()
+        open_theme_selector(window, text_area, entry_widget, send_button)
+    else:
+        tk.messagebox.showerror("Error", "Please fill in all fields.")
 
 def export_themes():
     file_path = filedialog.asksaveasfilename(defaultextension=".json", filetypes=[("JSON Files", "*.json")])
