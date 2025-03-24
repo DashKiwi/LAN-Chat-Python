@@ -7,7 +7,7 @@ import json
 import os
 import time
 from tkinter import scrolledtext, Toplevel, simpledialog, filedialog, colorchooser
-from PIL import Image, ImageTk
+from PIL import Image, ImageTk, ImageSequence
 import io
 
 current_theme_window = None
@@ -237,46 +237,43 @@ def receive_messages(client_socket, text_area):
                     filename_header = client_socket.recv(FILE_HEADER_LENGTH)
                     filename_length = int(filename_header.decode('utf-8').strip())
                     filename = client_socket.recv(filename_length).decode('utf-8')
+                    file_data = message
+                    save_file(file_data, filename)
 
-                    file_data = message  # Message contains the file data
-                    
                     # Check if the file is an image or GIF
                     if filename.lower().endswith(('.png', '.jpg', '.jpeg', '.gif')):
                         try:
                             image_data = io.BytesIO(file_data)
                             img = Image.open(image_data)
-                            img.thumbnail((200, 200)) # Resize image to fit in chat
-                            photo = ImageTk.PhotoImage(img)
-
-                            local_time = time.strftime("%H:%M")
-                            text_area.config(state=tk.NORMAL)
-                            text_area.image_names = []
-                            text_area.image_names.append(photo)
-                            text_area.insert(tk.END, f"\n{local_time} {username} > ")
-                            text_area.image_create(tk.END, image=photo)
-                            text_area.yview(tk.END)
-                            text_area.config(state=tk.DISABLED)
+                            if filename.lower().endswith('.gif'):
+                                frames = []
+                                for frame in ImageSequence.Iterator(img):
+                                    frame = frame.copy()
+                                    frame.thumbnail((200, 200))
+                                    frames.append(ImageTk.PhotoImage(frame))
+                                display_gif(text_area, frames, username)
+                            else:
+                                img.thumbnail((200, 200))
+                                photo = ImageTk.PhotoImage(img)
+                                display_image(text_area, photo, username)
                         except Exception as e:
                             print(f"Error displaying image: {e}")
-                            save_file(file_data, filename)
-                            local_time = time.strftime("%H:%M")
-                            text_area.config(state=tk.NORMAL)
-                            text_area.insert(tk.END, f"\n{local_time} {username} > File received: {filename}")
-                            text_area.yview(tk.END)
-                            text_area.config(state=tk.DISABLED)
+                            display_file_received(text_area, filename, username)
                     else:
-                        save_file(file_data, filename)
-                        local_time = time.strftime("%H:%M")
-                        text_area.config(state=tk.NORMAL)
-                        text_area.insert(tk.END, f"\n{local_time} {username} > File received: {filename}")
-                        text_area.yview(tk.END)
-                        text_area.config(state=tk.DISABLED)
+                        display_file_received(text_area, filename, username)
 
         except BlockingIOError:
             continue
         except Exception as e:
             print(f"Error receiving message: {e}")
             break
+
+def display_image(text_area, photo, username):
+    local_time = time.strftime("%H:%M")
+    text_area.config(state=tk.NORMAL)
+    if not hasattr(text_area, "image_names"):
+        text_area.image_names = []
+    text_area.image_names.append(photo)
 
 # Send messages from the GUI text box
 def send_message(client_socket, entry_widget, text_area):
