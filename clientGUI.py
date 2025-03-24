@@ -14,6 +14,7 @@ port_entry = None
 username_entry = None
 
 HEADER_LENGTH = 10
+FILE_HEADER_LENGTH = 20
 
 def set_path():
     global application_path, THEME_FILE, SERVERS_FILE
@@ -31,68 +32,85 @@ def save_themes():
     with open(THEME_FILE, "w") as file:
         json.dump(THEMES, file, indent=4)
 
-def apply_theme(window, text_area, entry_widget, send_button):
+def apply_theme(window, text_area=None, entry_widget=None, buttons=None, text=None):
     theme = THEMES[current_theme]
     window.configure(bg=theme["bg"])
-    text_area.config(bg=theme["bg"], fg=theme["fg"])
-    entry_widget.config(bg=theme["entry_bg"], fg=theme["entry_fg"])
-    send_button.config(bg=theme["entry_bg"], fg=theme["entry_fg"])
+    if text_area is not None:
+        for t in text_area:
+            t.configure(bg=theme["bg"], fg=theme["fg"])
+    if entry_widget is not None:
+        for entry in entry_widget:
+            entry.configure(bg=theme["entry_bg"], fg=theme["entry_fg"])
+    if buttons is not None:
+        for button in buttons:
+            button.configure(bg=theme["entry_bg"], fg=theme["entry_fg"])
+    if text is not None:
+        for txt in text:
+            txt.configure(bg=theme["bg"], fg=theme["fg"])
 
-def open_theme_selector(window, text_area, entry_widget, send_button):
+def open_theme_selector(window, text_area, entry_widget, buttons):
     global current_theme_window
     theme_window = Toplevel(window)
     theme_window.title("Select Theme")
     theme_window.geometry("200x250")
-    
+
     # Store the reference of the theme_window in the global variable
     # Close the old theme selector window if it's open
     if current_theme_window:
         current_theme_window.destroy()  # This closes the old theme selector window
     current_theme_window = theme_window
-    
+
     # Create a Canvas widget for scrolling
     canvas = tk.Canvas(theme_window)
     canvas.grid(row=0, column=0, sticky="nsew")  # Expand to all directions in grid
-    
+
     # Create a Scrollbar linked to the canvas
     scrollbar = tk.Scrollbar(theme_window, orient=tk.VERTICAL, command=canvas.yview)
     scrollbar.grid(row=0, column=1, sticky="ns")  # Place scrollbar to the right
-    
+
     # Configure the canvas to work with the scrollbar
     canvas.config(yscrollcommand=scrollbar.set)
-    
+
     # Create a frame inside the canvas to contain the theme buttons
     button_frame = tk.Frame(canvas)
     canvas.create_window((0, 0), window=button_frame, anchor="nw")
-    
+
+    # Initialize list to hold theme buttons
+    theme_buttons = []
     # Add the theme buttons to the button_frame
     for theme in THEMES.keys():
         if theme != "Selected_theme":
-            tk.Button(button_frame, text=theme, command=lambda t=theme: set_theme(t, window, text_area, entry_widget, send_button)).pack(pady=5)
-    
+            theme_button = tk.Button(button_frame, text=theme, command=lambda t=theme: set_theme(t, window, text_area, entry_widget, buttons))
+            theme_button.pack(pady=5)
+            theme_buttons.append(theme_button)  # Append to the list
+
     # Add the custom theme, export, and import buttons
-    tk.Button(button_frame, text="Create Custom Theme", command=lambda: create_custom_theme(window, text_area, entry_widget, send_button)).pack(pady=5)
-    tk.Button(button_frame, text="Export Themes", command=export_themes).pack(pady=5)
-    tk.Button(button_frame, text="Import Themes", command=lambda: import_themes(window, text_area, entry_widget, send_button)).pack(pady=5)
-    
+    create_button = tk.Button(button_frame, text="Create Custom Theme", command=lambda: create_custom_theme(window, text_area, entry_widget, buttons))
+    create_button.pack(pady=5)
+    export_button = tk.Button(button_frame, text="Export Themes", command=export_themes)
+    export_button.pack(pady=5)
+    import_button = tk.Button(button_frame, text="Import Themes", command=lambda: import_themes(window, text_area, entry_widget, buttons))
+    import_button.pack(pady=5)
+
     # Update the scroll region of the canvas after adding buttons
     button_frame.update_idletasks()  # Ensure frame size is updated before setting scroll region
     canvas.config(scrollregion=canvas.bbox("all"))  # Set the scroll region to the bounds of all items in the canvas
-    
+
     # Configure grid row and column weights to allow resizing
     theme_window.grid_rowconfigure(0, weight=1)  # Allow row 0 (Canvas) to expand
     theme_window.grid_columnconfigure(0, weight=1)  # Allow column 0 (Canvas) to expand
 
-def set_theme(theme, window, text_area, entry_widget, send_button):
-    global current_theme
-    current_theme = theme
-    THEMES["Selected_theme"] = theme
-    with open(THEME_FILE, "w") as file:
-        json.dump(THEMES, file, indent=4)
-    apply_theme(window, text_area, entry_widget, send_button)
-    save_themes()
+    # Apply the theme to the theme_window and buttons
+    apply_theme(canvas, buttons=[*theme_buttons, create_button, export_button, import_button])
 
-def create_custom_theme(window, text_area, entry_widget, send_button):
+def set_theme(theme, window, text_area, entry_widget, buttons):
+    global current_theme
+    THEMES["Selected_theme"] = theme
+    current_theme = theme
+    save_themes()
+    apply_theme(window, text_area=[text_area], entry_widget=[entry_widget], buttons=[*buttons])
+
+def create_custom_theme(window, text_area, entry_widget, buttons):
     theme_name = simpledialog.askstring("Custom Theme", "Enter theme name:")
     if not theme_name:
         return
@@ -118,10 +136,10 @@ def create_custom_theme(window, text_area, entry_widget, send_button):
     }
     
     save_themes()
-    set_theme(theme_name, window, text_area, entry_widget, send_button)
+    set_theme(theme_name, window, text_area, entry_widget, buttons)
 
     # Update theme selector to include the new theme
-    open_theme_selector(window, text_area, entry_widget, send_button)
+    open_theme_selector(window, text_area, entry_widget, buttons)
 
 def export_themes():
     file_path = filedialog.asksaveasfilename(defaultextension=".json", filetypes=[("JSON Files", "*.json")])
@@ -129,7 +147,7 @@ def export_themes():
         with open(file_path, "w") as file:
             json.dump(THEMES, file, indent=4)
 
-def import_themes(window, text_area, entry_widget, send_button):
+def import_themes(window, text_area, entry_widget, buttons):
     global THEMES, current_theme_window
     file_path = filedialog.askopenfilename(filetypes=[("JSON Files", "*.json")])
     if file_path:
@@ -140,14 +158,14 @@ def import_themes(window, text_area, entry_widget, send_button):
             save_themes()
             
             # Reapply the current theme after importing new themes
-            apply_theme(window, text_area, entry_widget, send_button)
+            apply_theme(window, text_area, entry_widget, [*buttons])
 
             # Close the old theme selector window if it exists
             if current_theme_window:
                 current_theme_window.destroy()
 
             # Open the theme selector again with the updated list
-            open_theme_selector(window, text_area, entry_widget, send_button)
+            open_theme_selector(window, text_area, entry_widget, buttons)
 
 def connect_to_server(ip, port, username):
     try:
@@ -181,14 +199,29 @@ def receive_messages(client_socket, text_area):
                 
                 message_header = client_socket.recv(HEADER_LENGTH)
                 message_length = int(message_header.decode('utf-8').strip())
-                message = client_socket.recv(message_length).decode('utf-8')
-                
-                local_time = time.strftime("%H:%M")
+                message = client_socket.recv(message_length)
 
-                text_area.config(state=tk.NORMAL)  # Allow editing
-                text_area.insert(tk.END, f"\n{local_time} {username} > {message}")
-                text_area.yview(tk.END)  # Auto-scroll to the bottom
-                text_area.config(state=tk.DISABLED)  # Disable editing
+                try:
+                    message_str = message.decode('utf-8')
+                    local_time = time.strftime("%H:%M")
+                    text_area.config(state=tk.NORMAL)
+                    text_area.insert(tk.END, f"\n{local_time} {username} > {message_str}")
+                    text_area.yview(tk.END)
+                    text_area.config(state=tk.DISABLED)
+                except UnicodeDecodeError:
+                    # File transfer
+                    filename_header = client_socket.recv(FILE_HEADER_LENGTH)
+                    filename_length = int(filename_header.decode('utf-8').strip())
+                    filename = client_socket.recv(filename_length).decode('utf-8')
+
+                    file_data = message  # Message contains the file data
+                    save_file(file_data, filename)
+
+                    local_time = time.strftime("%H:%M")
+                    text_area.config(state=tk.NORMAL)
+                    text_area.insert(tk.END, f"\n{local_time} {username} > File received: {filename}")
+                    text_area.yview(tk.END)
+                    text_area.config(state=tk.DISABLED)
         except BlockingIOError:
             continue
         except Exception as e:
@@ -214,6 +247,47 @@ def send_message(client_socket, entry_widget, text_area):
             entry_widget.delete(0, tk.END)  
         except Exception as e:
             print(f"Error sending message: {e}")
+
+def send_file(client_socket, filename):
+    try:
+        with open(filename, 'rb') as file:
+            file_data = file.read()
+
+        filename_encoded = os.path.basename(filename).encode('utf-8')
+        filename_header = f"{len(filename_encoded):<{FILE_HEADER_LENGTH}}".encode('utf-8')
+
+        message_header = f"{len(file_data):<{HEADER_LENGTH}}".encode('utf-8')
+
+        client_socket.send(message_header + file_data)
+        client_socket.send(filename_header + filename_encoded)
+
+    except Exception as e:
+        print(f"Error sending file: {e}")
+
+def select_file_and_send(client_socket, text_area):
+    filename = filedialog.askopenfilename()
+    if filename:
+        send_file(client_socket, filename)
+        text_area.config(state=tk.NORMAL)
+        text_area.insert(tk.END, f"\nYou > File sent: {os.path.basename(filename)}")
+        text_area.yview(tk.END)
+        text_area.config(state=tk.DISABLED)
+
+def save_file(file_data, filename):
+    try:
+        # Create the 'received_files' folder if it doesn't exist
+        if not os.path.exists("received_files"):
+            os.makedirs("received_files")
+
+        # Construct the full file path
+        file_path = os.path.join("received_files", filename)
+
+        # Save the file
+        with open(file_path, 'wb') as file:
+            file.write(file_data)
+        print(f"File saved as {file_path}")
+    except Exception as e:
+        print(f"Error saving file: {e}")
 
 def try_connect(ip_entry, port_entry, username_entry, error_label, root):
         error_label.config(text="Checking Fields", fg="red")
@@ -246,15 +320,21 @@ def show_connection_window():
     root = tk.Tk()
     root.title("Connect to Server")
 
-    tk.Label(root, text="IP Address:").grid(row=0, column=0, padx=5, pady=5, sticky="w")
+    ip_text = tk.Label(root, text="IP Address:")
+    ip_text.grid(row=0, column=0, padx=5, pady=5, sticky="w")
+
     ip_entry = tk.Entry(root, width=30)  # Assign to global variable
     ip_entry.grid(row=0, column=1, padx=5, pady=5)
 
-    tk.Label(root, text="Port:").grid(row=1, column=0, padx=5, pady=5, sticky="w")
+    port_text = tk.Label(root, text="Port:")
+    port_text.grid(row=1, column=0, padx=5, pady=5, sticky="w")
+
     port_entry = tk.Entry(root, width=30)  # Assign to global variable
     port_entry.grid(row=1, column=1, padx=5, pady=5)
 
-    tk.Label(root, text="Username:").grid(row=2, column=0, padx=5, pady=5, sticky="w")
+    user_text = tk.Label(root, text="Username:")
+    user_text.grid(row=2, column=0, padx=5, pady=5, sticky="w")
+
     username_entry = tk.Entry(root, width=30)  # Assign to global variable
     username_entry.grid(row=2, column=1, padx=5, pady=5)
 
@@ -266,6 +346,8 @@ def show_connection_window():
 
     prev_connections_button = tk.Button(root, text="Previous Connections", command=lambda: open_previous_connections(root))
     prev_connections_button.grid(row=4, column=0, columnspan=2, pady=5)
+
+    apply_theme(root, entry_widget=[ip_entry, port_entry, username_entry], buttons=[connect_button, prev_connections_button, error_label], text=[ip_text, port_text, user_text])
 
     root.mainloop()
 
@@ -290,6 +372,8 @@ def open_previous_connections(parent):
 
     edit_button = tk.Button(prev_window, text="Edit Server", command=lambda: edit_selected(server_listbox, servers, prev_window))
     edit_button.pack(pady=5)
+
+    apply_theme(prev_window, entry_widget=[server_listbox], buttons=[join_button, add_button, edit_button])
 
 def join_selected(server_listbox, servers, prev_window):
     global ip_entry, port_entry, username_entry
@@ -389,14 +473,18 @@ def create_gui(client_socket):
     send_button = tk.Button(window, text="Send", width=10, command=lambda: send_message(client_socket, entry_widget, text_area))
     send_button.grid(row=1, column=1, padx=10, pady=10)
     
+    # Create send file button
+    file_button = tk.Button(window, text="Send File", width=10, command=lambda: select_file_and_send(client_socket, text_area))
+    file_button.grid(row=2, column=1, columnspan=2, pady=5)
+
     # Bind Enter key to send message
     entry_widget.bind('<Return>', lambda event: send_message(client_socket, entry_widget, text_area))
     
     # Start receiving messages in a separate thread
-    theme_button = tk.Button(window, text="Change Theme", command=lambda: open_theme_selector(window, text_area, entry_widget, send_button))
+    theme_button = tk.Button(window, text="Change Theme", command=lambda: open_theme_selector(window, text_area, entry_widget, [send_button, file_button, theme_button]))
     theme_button.grid(row=2, column=0, columnspan=2, pady=5)
     
-    apply_theme(window, text_area, entry_widget, send_button)
+    apply_theme(window, text_area=[text_area], entry_widget=[entry_widget], buttons=[send_button, file_button, theme_button])
     
     receive_thread = threading.Thread(target=receive_messages, args=(client_socket, text_area), daemon=True)
     receive_thread.start()

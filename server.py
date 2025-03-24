@@ -1,6 +1,7 @@
 import socket
 import select
 import time
+import os
 
 def get_local_ip():
     try:
@@ -23,6 +24,7 @@ def receive_message(client_socket):
         return False
 
 HEADER_LENGTH = 10
+FILE_HEADER_LENGTH = 20  # Increased for file data
 
 while True:
     try:
@@ -61,13 +63,13 @@ while True:
 
             # Notify all other clients that a new client has joined
             join_message = "[Client has joined]"
-            
+
             # Prepare the message with username, and join message
             username_str = user["data"]
             username_header = f"{len(username_str):<{HEADER_LENGTH}}".encode('utf-8')
             message_encoded = join_message.encode('utf-8')
             message_header = f"{len(message_encoded):<{HEADER_LENGTH}}".encode('utf-8')
-            
+
             # Send the join message to all clients (except the new one)
             for client_socket in clients:
                 if client_socket != notified_socket:
@@ -79,28 +81,45 @@ while True:
                 # Handle client disconnection
                 user = clients[notified_socket]
                 disconnect_message = "[Client has disconnected]"
-                
+
                 # Prepare the message with time, username, and disconnect message
                 username_str = user["data"]
                 username_header = f"{len(username_str):<{HEADER_LENGTH}}".encode('utf-8')
                 message_encoded = disconnect_message.encode('utf-8')
                 message_header = f"{len(message_encoded):<{HEADER_LENGTH}}".encode('utf-8')
-                
+
                 # Send the message to all clients (except the disconnected one)
                 for client_socket in clients:
                     if client_socket != notified_socket:
                         client_socket.send(username_header + username_str + message_header + message_encoded)
-                
+
                 print("Closed connection from: {}".format(user["data"].decode("utf-8")))
                 sockets_list.remove(notified_socket)
                 del clients[notified_socket]
                 continue
-            user = clients[notified_socket]
-            print(f"Received message from {user['data'].decode('utf-8')}: {message['data'].decode('utf-8')}")
-            for client_socket in clients:
-                if client_socket != notified_socket:
-                    message_to_send = user["header"] + user["data"] + message["header"] + message["data"]
-                    client_socket.send(message_to_send)
+
+            # Check if it's a file transfer
+            try:
+                message_str = message['data'].decode('utf-8')
+                print(f"Received message from {clients[notified_socket]['data'].decode('utf-8')}: {message_str}")
+                for client_socket in clients:
+                    if client_socket != notified_socket:
+                        message_to_send = clients[notified_socket]["header"] + clients[notified_socket]["data"] + message["header"] + message["data"]
+                        client_socket.send(message_to_send)
+            except UnicodeDecodeError:
+                # File transfer
+                filename_header = notified_socket.recv(FILE_HEADER_LENGTH)
+                filename_length = int(filename_header.decode('utf-8').strip())
+                filename = notified_socket.recv(filename_length).decode('utf-8')
+
+                print(f"Received file '{filename}' from {clients[notified_socket]['data'].decode('utf-8')}")
+
+                # Forward file to all other clients.
+                for client_socket in clients:
+                    if client_socket != notified_socket:
+                        message_to_send = clients[notified_socket]["header"] + clients[notified_socket]["data"] + message["header"] + message["data"]
+                        client_socket.send(message_to_send)
+                        client_socket.send(filename_header + filename.encode('utf-8'))
 
     for notified_socket in exception_sockets:
         sockets_list.remove(notified_socket)
