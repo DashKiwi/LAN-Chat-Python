@@ -220,7 +220,7 @@ def receive_messages(client_socket, text_area):
                 
                 username_length = int(username_header.decode('utf-8').strip())
                 username = client_socket.recv(username_length).decode('utf-8')
-                
+
                 message_header = client_socket.recv(HEADER_LENGTH)
                 message_length = int(message_header.decode('utf-8').strip())
                 message = client_socket.recv(message_length)
@@ -237,30 +237,40 @@ def receive_messages(client_socket, text_area):
                     filename_header = client_socket.recv(FILE_HEADER_LENGTH)
                     filename_length = int(filename_header.decode('utf-8').strip())
                     filename = client_socket.recv(filename_length).decode('utf-8')
-                    file_data = message
-                    save_file(file_data, filename)
+
+                    file_data = message  # Message contains the file data
 
                     # Check if the file is an image or GIF
                     if filename.lower().endswith(('.png', '.jpg', '.jpeg', '.gif')):
                         try:
                             image_data = io.BytesIO(file_data)
                             img = Image.open(image_data)
-                            if filename.lower().endswith('.gif'):
-                                frames = []
-                                for frame in ImageSequence.Iterator(img):
-                                    frame = frame.copy()
-                                    frame.thumbnail((200, 200))
-                                    frames.append(ImageTk.PhotoImage(frame))
-                                display_gif(text_area, frames, username)
-                            else:
-                                img.thumbnail((200, 200))
-                                photo = ImageTk.PhotoImage(img)
-                                display_image(text_area, photo, username)
+                            img.thumbnail((200, 200))  # Resize image to fit in chat
+                            photo = ImageTk.PhotoImage(img)
+
+                            local_time = time.strftime("%H:%M")
+                            text_area.config(state=tk.NORMAL)
+                            text_area.image_names = []
+                            text_area.image_names.append(photo)
+                            text_area.insert(tk.END, f"\n{local_time} {username} > ")
+                            text_area.image_create(tk.END, image=photo)
+                            text_area.yview(tk.END)
+                            text_area.config(state=tk.DISABLED)
                         except Exception as e:
                             print(f"Error displaying image: {e}")
-                            display_file_received(text_area, filename, username)
+                            save_file(file_data, filename)
+                            local_time = time.strftime("%H:%M")
+                            text_area.config(state=tk.NORMAL)
+                            text_area.insert(tk.END, f"\n{local_time} {username} > File received: {filename}")
+                            text_area.yview(tk.END)
+                            text_area.config(state=tk.DISABLED)
                     else:
-                        display_file_received(text_area, filename, username)
+                        save_file(file_data, filename)
+                        local_time = time.strftime("%H:%M")
+                        text_area.config(state=tk.NORMAL)
+                        text_area.insert(tk.END, f"\n{local_time} {username} > File received: {filename}")
+                        text_area.yview(tk.END)
+                        text_area.config(state=tk.DISABLED)
 
         except BlockingIOError:
             continue
