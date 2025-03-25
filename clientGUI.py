@@ -18,6 +18,57 @@ username_entry = None
 HEADER_LENGTH = 10
 FILE_HEADER_LENGTH = 20
 
+emojis = {
+        ":grinning:": "😀", ":grin:": "😃", ":joy:": "😂", ":rolling_on_the_floor_laughing:": "🤣", ":smile:": "😄",
+    ":smiling_face_with_tear:": "🥲", ":sweat_smile:": "😅", ":laughing:": "😆",":innocent:": "😇", ":wink:": "😉", ":blush:": "😊", ":slightly_smiling:": "🙂", ":upside_down:": "🙃",
+    ":relaxed:": "😌", ":heart_eyes:": "😍", ":kissing_heart:": "😘", ":kissing:": "😗", ":kissing_smiling_eyes:": "😙", ":kissing_closed_eyes:": "😚", ":yum:": "😋",
+    ":stuck_out_tongue:": "😛", ":stuck_out_tongue_winking_eye:": "😜", ":zany_face:": "🤪", ":raised_eyebrow:": "🤨", ":thinking:": "🤔", ":nerd:": "🤓", ":sunglasses:": "😎",
+    ":star_struck:": "🤩", ":partying_face:": "🥳", ":smirk:": "😏", ":unamused:": "😒", ":disappointed:": "😞", ":pensive:": "😔", ":worried:": "😟", ":confused:": "😕",
+    ":slightly_frowning:": "🙁", ":pleading_face:": "🥺", ":cry:": "😢", ":sob:": "😭", ":astonished:": "😲", ":open_mouth:": "😮", ":scream:": "😱", ":flushed:": "😳",
+    ":frowning:": " frown", ":anguished:": "😧", ":fearful:": "😨", ":cold_sweat:": "😰", ":persevere:": " persevering", ":confounded:": "😖", ":tired_face:": "😫", ":weary:": "😩",
+    ":triumph:": "😤", ":angry:": "😠", ":rage:": "😡", ":no_mouth:": "😶", ":neutral_face:": "😐", ":expressionless:": "😑", ":grimacing:": " grimace", ":lying_face:": "🤥",
+    ":shushing_face:": "🤫", ":hand_over_mouth:": "🤭", ":thinking_face:": "🤔", ":zipper_mouth:": "🤐", ":raised_eyebrow:": "🤨", ":monocle_face:": "🧐", ":sleeping:": "😴",
+    ":dizzy_face:": "😵", ":exploding_head:": "🤯", ":cowboy:": "🤠", ":clown:": "🤡", ":nauseated_face:": "🤢", ":vomiting_face:": "🤮", ":sneezing_face:": "🤧", ":hot_face:": "🥵",
+    ":cold_face:": "🥶", ":woozy_face:": "🥴", ":face_with_symbols_over_mouth:": "🤬", ":face_with_spiral_eyes:": "😵‍💫", ":skull:": "💀", ":skull_and_crossbones:": "☠️",
+    ":ghost:": "👻", ":alien:": "👽", ":robot:": "🤖", ":poop:": "💩", ":smiling_cat_with_heart_eyes:": "😻", ":see_no_evil:": "🙈", ":hear_no_evil:": "🙉",
+    ":speak_no_evil:": "🙊", ":wave:": "👋", ":raised_back_of_hand:": "🤚", ":raised_hand:": "✋", ":vulcan_salute:": "🖖", ":ok_hand:": "👌", ":pinching_hand:": "🤏",
+    ":v:": "✌️", ":crossed_fingers:": "🤞", ":love_you_gesture:": "🤟", ":metal:": "🤘", ":call_me_hand:": "🤙", ":point_left:": "👈", ":point_right:": "👉", ":point_up_2:": "👆",
+    ":point_down:": "👇", ":point_up:": "☝️", ":raised_fist:": "✊", ":fist:": "👊", ":left_facing_fist:": "🤛", ":right_facing_fist:": "🤜", ":clap:": "👏", ":raised_hands:": "🙌",
+    ":open_hands:": "👐", ":handshake:": "🤝", ":thumbsup:": "👍", ":thumbsdown:": "👎", ":pray:": "🙏", ":muscle:": "💪", ":foot:": "🦶", ":leg:": "🦵", ":brain:": "🧠",
+    ":tooth:": "🦷", ":bone:": "🦴", ":eyes:": "👀", ":eye:": "👁️", ":ear:": "👂", ":nose:": "👃", ":lips:": "👄", ":tongue:": "👅", ":baby:": "👶", ":child:": "🧒",
+    ":boy:": "👦",":girl:": "👧", ":adult:": "🧑", ":older_adult:": "🧓", ":man:": "👨", ":woman:": "👩", ":bearded_person:": "🧔", ":older_man:": "👴", ":older_woman:": "👵",
+    ":monkey_face:": "🐵", ":monkey:": "🐒", ":dog:": "🐶", ":cat:": "🐱", ":mouse:": "🐭", ":hamster:": "🐹", ":rabbit:": "🐰", ":fox_face:": "🦊", ":bear:": "🐻",
+    ":panda_face:": "🐼", ":koala:": "🐨", ":tiger:": "🐯", ":lion:": "🦁", ":cow:": "🐮", ":pig:": "🐷", ":frog:": "🐸", ":chicken:": "🐔", ":penguin:": "🐧", ":bird:": "🐦",
+    ":baby_chick:": "🐤", ":duck:": "🦆", ":eagle:": "🦅", ":owl:": "🦉", ":bat:": "🦇", ":horse:": "🐴", ":unicorn:": "🦄", ":bee:": "🐝", ":bug:": "🐛", ":butterfly:": "🦋",
+    ":snail:": "🐌", ":lady_beetle:": "🐞", ":ant:": "🐜", ":cricket:": "🦗", ":spider:": "🕷️", ":scorpion:": "🦂", ":turtle:": "🐢", ":snake:": "🐍", ":lizard:": "🦎",
+    ":t_rex:": "🦖", ":sauropod:": "🦕", ":octopus:": "🐙", ":squid:": "🦑", ":shrimp:": "🦐", ":lobster:": "🦞", ":crab:": "🦀", ":blowfish:": "🐡", ":tropical_fish:": "🐠",
+    ":fish:": "🐟", ":dolphin:": "🐬", ":whale:": "🐳", ":shark:": "🦈", ":crocodile:": "🐊", ":tiger2:": "🐅", ":leopard:": "🐆", ":zebra:": "🦓", ":gorilla:": "🦍",
+    ":elephant:": "🐘", ":hippopotamus:": "🦛", ":mammoth:": "🦣", ":camel:": "🐪", ":two_hump_camel:": "🐫", ":giraffe:": "🦒", ":water_buffalo:": "🐃", ":ox:": "🐂", ":cow2:": "🐄",
+    ":racehorse:": "🐎", ":pig2:": "🐖", ":ram:": "🐏", ":sheep:": "🐑", ":goat:": "🐐", ":deer:": "🦌", ":dog2:": "🐕", ":poodle:": "🐩", ":cat2:": "🐈", ":rooster:": "🐓",
+    ":turkey:": "🦃",":dove:": "🕊️", ":rabbit2:": "🐇", ":mouse2:": "🐁", ":rat:": "🐀", ":chipmunk:": "🐿️", ":hedgehog:": "🦔", ":paw_prints:": "🐾", ":dragon:": "🐉",
+    ":dragon_face:": "🐲", ":bouquet:": "💐", ":cherry_blossom:": "🌸", ":white_flower:": "💮", ":rosette:": "🏵️", ":rose:": "🌹", ":wilted_flower:": "🥀", ":hibiscus:": "🌺",
+    ":sunflower:": "🌻", ":blossom:": "🌼", ":tulip:": "🌷", ":seedling:": "🌱", ":evergreen_tree:": "🌲", ":deciduous_tree:": "🌳", ":palm_tree:": "🌴", ":cactus:": "🌵",
+    ":ear_of_rice:": "🌾", ":herb:": "🌿", ":shamrock:": "🍀", ":maple_leaf:": "🍁", ":fallen_leaf:": "🍂", ":leaves:": "🍃", ":mushroom:": "🍄", ":earth_africa:": "🌍",
+    ":earth_americas:": "🌎", ":earth_asia:": "🌏", ":full_moon:": "🌕", ":waning_gibbous_moon:": "🌖", ":last_quarter_moon:": "🌗", ":waning_crescent_moon:": "🌘", ":new_moon:": "🌑",
+    ":waxing_crescent_moon:": "🌒", ":first_quarter_moon:": "🌓", ":waxing_gibbous_moon:": "🌔", ":crescent_moon:": "🌙", ":star:": "⭐", ":sparkles:": "✨", ":sun:": "☀️",
+    ":sunrise_over_mountains:": "🌄", ":sunrise:": "🌅", ":night_with_stars:": "🌃", ":milky_way:": "🌌", ":rainbow:": "🌈", ":bridge_at_night:": "🌉", ":water_wave:": "🌊",
+    ":volcano:": "🌋", ":mount_fuji:": "🗻", ":camping:": "🏕️", ":beach_with_umbrella:": "🏖️", ":desert:": "🏜️", ":desert_island:": "🏝️", ":national_park:": "🏞️", ":stadium:": "🏟️",
+    ":classical_building:": "🏛️", ":building_construction:": "🏗️", ":houses:": "🏘️", ":cityscape:": "🏙️", ":derelict_house:": "🏚️", ":house:": "🏠", ":house_with_garden:": "🏡",
+    ":office:": "🏢", ":post_office:": "🏣", ":hospital:": "🏥", ":bank:": "🏦", ":hotel:": "🏨", ":love_hotel:": "🏩", ":convenience_store:": "🏪", ":school:": "🏫",
+    ":department_store:": "🏬", ":factory:": "🏭", ":japanese_castle:": "🏯", ":european_castle:": "🏰", ":wedding:": "💒", ":tokyo_tower:": "🗼", ":statue_of_liberty:": "🗽",
+    ":japan:": "🗾", ":moyai:": "🗿", ":sunrise_over_mountains:": "🌄", ":sunset:": "🌇", ":hotsprings:": "♨️", ":circus_carousel:": "🎠", ":ferris_wheel:": "🎡",
+    ":roller_coaster:": "🎢", ":steam_locomotive:": "🚂", ":railway_car:": "🚃", ":high_speed_train:": "🚄", ":bullettrain_side:": "🚅", ":train2:": "🚆", ":metro:": "🚇",
+    ":light_rail:": "🚈", ":station:": "🚉", ":tram:": "🚊", ":monorail:": "🚝", ":mountain_railway:": "🚞", ":canoe:": "🛶", ":sailboat:": "⛵", ":motor_boat:": "🛥️",
+    ":passenger_ship:": "🛳️", ":ferry:": "⛴️", ":ship:": "🚢", ":airplane:": "✈️", ":small_airplane:": "🛩️", ":airplane_departure:": "🛫", ":airplane_arrival:": "🛬",
+    ":rocket:": "🚀", ":flying_saucer:": "🛸", ":helicopter:": "🚁", ":cable_car:": "🚠", ":suspension_railway:": "🚟", ":satellite_orbital:": "🛰️", ":scooter:": "🛵",
+    ":motorcycle:": "🏍️", ":racing_car:": "🏎️", ":oncoming_automobile:": "🚘", ":automobile:": "🚗", ":taxi:": "🚕", ":oncoming_taxi:": "🚖", ":articulated_lorry:": "🚛",
+    ":truck:": "🚚", ":tractor:": "🚜", ":bike:": "🚲", ":kick_scooter:": "🛴", ":skateboard:": "🛹", ":auto_rickshaw:": "🛺", ":police_car_light:": "🚨", ":police_car:": "🚓",
+    ":oncoming_police_car:": "🚔", ":ambulance:": "🚑", ":fire_engine:": "🚒", ":minibus:": "🚐", ":bus:": "🚌", ":oncoming_bus:": "🚍", ":trolleybus:": "🚎", 
+    ":mountain_cableway:": "🚠", ":construction_site:": "🚧", ":stop_sign:": "🛑", ":railway_traffic_light:": "🚦", ":vertical_traffic_light:": "🚥", ":ship:": "🛳️",
+    ":rocket:": "🚀", ":flying_saucer:": "🛸", ":world_map:": "🗺️", ":mountain:": "🏔️", ":volcano:": "🌋", ":beach_with_umbrella:": "🏖️", ":desert:": "🏜️", ":camping:": "🏕️",
+    ":national_park:": "🏞️", ":stadium:": "🏟️", ":classical_building:": "🏛️", ":building_construction:": "🏗️", ":houses:": "🏘️", ":cityscape:": "🏙️", ":derelict_house:": "🏚️"
+    }
+
 def set_path():
     global application_path, THEME_FILE, SERVERS_FILE
     if getattr(sys, 'frozen', False):
@@ -316,7 +367,8 @@ def send_file(client_socket, filename):
     try:
         with open(filename, 'rb') as file:
             file_data = file.read()
-
+		
+        print(os.path.basename(filename))
         filename_encoded = os.path.basename(filename).encode('utf-8')
         filename_header = f"{len(filename_encoded):<{FILE_HEADER_LENGTH}}".encode('utf-8')
 
@@ -522,56 +574,6 @@ def save_servers(servers):
 
 def emoji_lookup(input_field):
     global emojis
-    emojis = {
-        ":grinning:": "😀", ":grin:": "😃", ":joy:": "😂", ":rolling_on_the_floor_laughing:": "🤣", ":smile:": "😄",
-    ":smiling_face_with_tear:": "🥲", ":sweat_smile:": "😅", ":laughing:": "😆",":innocent:": "😇", ":wink:": "😉", ":blush:": "😊", ":slightly_smiling:": "🙂", ":upside_down:": "🙃",
-    ":relaxed:": "😌", ":heart_eyes:": "😍", ":kissing_heart:": "😘", ":kissing:": "😗", ":kissing_smiling_eyes:": "😙", ":kissing_closed_eyes:": "😚", ":yum:": "😋",
-    ":stuck_out_tongue:": "😛", ":stuck_out_tongue_winking_eye:": "😜", ":zany_face:": "🤪", ":raised_eyebrow:": "🤨", ":thinking:": "🤔", ":nerd:": "🤓", ":sunglasses:": "😎",
-    ":star_struck:": "🤩", ":partying_face:": "🥳", ":smirk:": "😏", ":unamused:": "😒", ":disappointed:": "😞", ":pensive:": "😔", ":worried:": "😟", ":confused:": "😕",
-    ":slightly_frowning:": "🙁", ":pleading_face:": "🥺", ":cry:": "😢", ":sob:": "😭", ":astonished:": "😲", ":open_mouth:": "😮", ":scream:": "😱", ":flushed:": "😳",
-    ":frowning:": " frown", ":anguished:": "😧", ":fearful:": "😨", ":cold_sweat:": "😰", ":persevere:": " persevering", ":confounded:": "😖", ":tired_face:": "😫", ":weary:": "😩",
-    ":triumph:": "😤", ":angry:": "😠", ":rage:": "😡", ":no_mouth:": "😶", ":neutral_face:": "😐", ":expressionless:": "😑", ":grimacing:": " grimace", ":lying_face:": "🤥",
-    ":shushing_face:": "🤫", ":hand_over_mouth:": "🤭", ":thinking_face:": "🤔", ":zipper_mouth:": "🤐", ":raised_eyebrow:": "🤨", ":monocle_face:": "🧐", ":sleeping:": "😴",
-    ":dizzy_face:": "😵", ":exploding_head:": "🤯", ":cowboy:": "🤠", ":clown:": "🤡", ":nauseated_face:": "🤢", ":vomiting_face:": "🤮", ":sneezing_face:": "🤧", ":hot_face:": "🥵",
-    ":cold_face:": "🥶", ":woozy_face:": "🥴", ":face_with_symbols_over_mouth:": "🤬", ":face_with_spiral_eyes:": "😵‍💫", ":skull:": "💀", ":skull_and_crossbones:": "☠️",
-    ":ghost:": "👻", ":alien:": "👽", ":robot:": "🤖", ":poop:": "💩", ":smiling_cat_with_heart_eyes:": "😻", ":see_no_evil:": "🙈", ":hear_no_evil:": "🙉",
-    ":speak_no_evil:": "🙊", ":wave:": "👋", ":raised_back_of_hand:": "🤚", ":raised_hand:": "✋", ":vulcan_salute:": "🖖", ":ok_hand:": "👌", ":pinching_hand:": "🤏",
-    ":v:": "✌️", ":crossed_fingers:": "🤞", ":love_you_gesture:": "🤟", ":metal:": "🤘", ":call_me_hand:": "🤙", ":point_left:": "👈", ":point_right:": "👉", ":point_up_2:": "👆",
-    ":point_down:": "👇", ":point_up:": "☝️", ":raised_fist:": "✊", ":fist:": "👊", ":left_facing_fist:": "🤛", ":right_facing_fist:": "🤜", ":clap:": "👏", ":raised_hands:": "🙌",
-    ":open_hands:": "👐", ":handshake:": "🤝", ":thumbsup:": "👍", ":thumbsdown:": "👎", ":pray:": "🙏", ":muscle:": "💪", ":foot:": "🦶", ":leg:": "🦵", ":brain:": "🧠",
-    ":tooth:": "🦷", ":bone:": "🦴", ":eyes:": "👀", ":eye:": "👁️", ":ear:": "👂", ":nose:": "👃", ":lips:": "👄", ":tongue:": "👅", ":baby:": "👶", ":child:": "🧒",
-    ":boy:": "👦",":girl:": "👧", ":adult:": "🧑", ":older_adult:": "🧓", ":man:": "👨", ":woman:": "👩", ":bearded_person:": "🧔", ":older_man:": "👴", ":older_woman:": "👵",
-    ":monkey_face:": "🐵", ":monkey:": "🐒", ":dog:": "🐶", ":cat:": "🐱", ":mouse:": "🐭", ":hamster:": "🐹", ":rabbit:": "🐰", ":fox_face:": "🦊", ":bear:": "🐻",
-    ":panda_face:": "🐼", ":koala:": "🐨", ":tiger:": "🐯", ":lion:": "🦁", ":cow:": "🐮", ":pig:": "🐷", ":frog:": "🐸", ":chicken:": "🐔", ":penguin:": "🐧", ":bird:": "🐦",
-    ":baby_chick:": "🐤", ":duck:": "🦆", ":eagle:": "🦅", ":owl:": "🦉", ":bat:": "🦇", ":horse:": "🐴", ":unicorn:": "🦄", ":bee:": "🐝", ":bug:": "🐛", ":butterfly:": "🦋",
-    ":snail:": "🐌", ":lady_beetle:": "🐞", ":ant:": "🐜", ":cricket:": "🦗", ":spider:": "🕷️", ":scorpion:": "🦂", ":turtle:": "🐢", ":snake:": "🐍", ":lizard:": "🦎",
-    ":t_rex:": "🦖", ":sauropod:": "🦕", ":octopus:": "🐙", ":squid:": "🦑", ":shrimp:": "🦐", ":lobster:": "🦞", ":crab:": "🦀", ":blowfish:": "🐡", ":tropical_fish:": "🐠",
-    ":fish:": "🐟", ":dolphin:": "🐬", ":whale:": "🐳", ":shark:": "🦈", ":crocodile:": "🐊", ":tiger2:": "🐅", ":leopard:": "🐆", ":zebra:": "🦓", ":gorilla:": "🦍",
-    ":elephant:": "🐘", ":hippopotamus:": "🦛", ":mammoth:": "🦣", ":camel:": "🐪", ":two_hump_camel:": "🐫", ":giraffe:": "🦒", ":water_buffalo:": "🐃", ":ox:": "🐂", ":cow2:": "🐄",
-    ":racehorse:": "🐎", ":pig2:": "🐖", ":ram:": "🐏", ":sheep:": "🐑", ":goat:": "🐐", ":deer:": "🦌", ":dog2:": "🐕", ":poodle:": "🐩", ":cat2:": "🐈", ":rooster:": "🐓",
-    ":turkey:": "🦃",":dove:": "🕊️", ":rabbit2:": "🐇", ":mouse2:": "🐁", ":rat:": "🐀", ":chipmunk:": "🐿️", ":hedgehog:": "🦔", ":paw_prints:": "🐾", ":dragon:": "🐉",
-    ":dragon_face:": "🐲", ":bouquet:": "💐", ":cherry_blossom:": "🌸", ":white_flower:": "💮", ":rosette:": "🏵️", ":rose:": "🌹", ":wilted_flower:": "🥀", ":hibiscus:": "🌺",
-    ":sunflower:": "🌻", ":blossom:": "🌼", ":tulip:": "🌷", ":seedling:": "🌱", ":evergreen_tree:": "🌲", ":deciduous_tree:": "🌳", ":palm_tree:": "🌴", ":cactus:": "🌵",
-    ":ear_of_rice:": "🌾", ":herb:": "🌿", ":shamrock:": "🍀", ":maple_leaf:": "🍁", ":fallen_leaf:": "🍂", ":leaves:": "🍃", ":mushroom:": "🍄", ":earth_africa:": "🌍",
-    ":earth_americas:": "🌎", ":earth_asia:": "🌏", ":full_moon:": "🌕", ":waning_gibbous_moon:": "🌖", ":last_quarter_moon:": "🌗", ":waning_crescent_moon:": "🌘", ":new_moon:": "🌑",
-    ":waxing_crescent_moon:": "🌒", ":first_quarter_moon:": "🌓", ":waxing_gibbous_moon:": "🌔", ":crescent_moon:": "🌙", ":star:": "⭐", ":sparkles:": "✨", ":sun:": "☀️",
-    ":sunrise_over_mountains:": "🌄", ":sunrise:": "🌅", ":night_with_stars:": "🌃", ":milky_way:": "🌌", ":rainbow:": "🌈", ":bridge_at_night:": "🌉", ":water_wave:": "🌊",
-    ":volcano:": "🌋", ":mount_fuji:": "🗻", ":camping:": "🏕️", ":beach_with_umbrella:": "🏖️", ":desert:": "🏜️", ":desert_island:": "🏝️", ":national_park:": "🏞️", ":stadium:": "🏟️",
-    ":classical_building:": "🏛️", ":building_construction:": "🏗️", ":houses:": "🏘️", ":cityscape:": "🏙️", ":derelict_house:": "🏚️", ":house:": "🏠", ":house_with_garden:": "🏡",
-    ":office:": "🏢", ":post_office:": "🏣", ":hospital:": "🏥", ":bank:": "🏦", ":hotel:": "🏨", ":love_hotel:": "🏩", ":convenience_store:": "🏪", ":school:": "🏫",
-    ":department_store:": "🏬", ":factory:": "🏭", ":japanese_castle:": "🏯", ":european_castle:": "🏰", ":wedding:": "💒", ":tokyo_tower:": "🗼", ":statue_of_liberty:": "🗽",
-    ":japan:": "🗾", ":moyai:": "🗿", ":sunrise_over_mountains:": "🌄", ":sunset:": "🌇", ":hotsprings:": "♨️", ":circus_carousel:": "🎠", ":ferris_wheel:": "🎡",
-    ":roller_coaster:": "🎢", ":steam_locomotive:": "🚂", ":railway_car:": "🚃", ":high_speed_train:": "🚄", ":bullettrain_side:": "🚅", ":train2:": "🚆", ":metro:": "🚇",
-    ":light_rail:": "🚈", ":station:": "🚉", ":tram:": "🚊", ":monorail:": "🚝", ":mountain_railway:": "🚞", ":canoe:": "🛶", ":sailboat:": "⛵", ":motor_boat:": "🛥️",
-    ":passenger_ship:": "🛳️", ":ferry:": "⛴️", ":ship:": "🚢", ":airplane:": "✈️", ":small_airplane:": "🛩️", ":airplane_departure:": "🛫", ":airplane_arrival:": "🛬",
-    ":rocket:": "🚀", ":flying_saucer:": "🛸", ":helicopter:": "🚁", ":cable_car:": "🚠", ":suspension_railway:": "🚟", ":satellite_orbital:": "🛰️", ":scooter:": "🛵",
-    ":motorcycle:": "🏍️", ":racing_car:": "🏎️", ":oncoming_automobile:": "🚘", ":automobile:": "🚗", ":taxi:": "🚕", ":oncoming_taxi:": "🚖", ":articulated_lorry:": "🚛",
-    ":truck:": "🚚", ":tractor:": "🚜", ":bike:": "🚲", ":kick_scooter:": "🛴", ":skateboard:": "🛹", ":auto_rickshaw:": "🛺", ":police_car_light:": "🚨", ":police_car:": "🚓",
-    ":oncoming_police_car:": "🚔", ":ambulance:": "🚑", ":fire_engine:": "🚒", ":minibus:": "🚐", ":bus:": "🚌", ":oncoming_bus:": "🚍", ":trolleybus:": "🚎", 
-    ":mountain_cableway:": "🚠", ":construction_site:": "🚧", ":stop_sign:": "🛑", ":railway_traffic_light:": "🚦", ":vertical_traffic_light:": "🚥", ":ship:": "🛳️",
-    ":rocket:": "🚀", ":flying_saucer:": "🛸", ":world_map:": "🗺️", ":mountain:": "🏔️", ":volcano:": "🌋", ":beach_with_umbrella:": "🏖️", ":desert:": "🏜️", ":camping:": "🏕️",
-    ":national_park:": "🏞️", ":stadium:": "🏟️", ":classical_building:": "🏛️", ":building_construction:": "🏗️", ":houses:": "🏘️", ":cityscape:": "🏙️", ":derelict_house:": "🏚️"
-    }
 
     emoji_window = tk.Toplevel()
     emoji_window.title("Emoji Lookup")
