@@ -6,7 +6,7 @@ import tkinter as tk
 import json
 import os
 import time
-from tkinter import scrolledtext, Toplevel, simpledialog, filedialog, colorchooser
+from tkinter import scrolledtext, Toplevel, simpledialog, filedialog, colorchooser, scrolledtext
 from PIL import Image, ImageTk, ImageSequence
 import io
 
@@ -285,10 +285,17 @@ def display_image(text_area, photo, username):
         text_area.image_names = []
     text_area.image_names.append(photo)
 
+def replace_emoji_shortcuts(message):
+    global emojis
+    for shortcut, emoji in emojis.items():
+        message = message.replace(shortcut, emoji)
+    return message
+
 # Send messages from the GUI text box
 def send_message(client_socket, entry_widget, text_area):
     message = entry_widget.get()
     if message:
+        message = replace_emoji_shortcuts(message)
         try:
             # Send message to server
             message_encoded = message.encode('utf-8')
@@ -513,31 +520,114 @@ def save_servers(servers):
     with open(SERVERS_FILE, "w") as file:
         json.dump(servers, file, indent=4)
 
+def emoji_lookup(input_field):
+    global emojis
+    emojis = {
+        ":grinning:": "😀", ":grin:": "😃", ":joy:": "😂", ":rolling_on_the_floor_laughing:": "🤣", ":smile:": "😄",
+    ":smiling_face_with_tear:": "🥲", ":sweat_smile:": "😅", ":laughing:": "😆",":innocent:": "😇", ":wink:": "😉", ":blush:": "😊", ":slightly_smiling:": "🙂", ":upside_down:": "🙃",
+    ":relaxed:": "😌", ":heart_eyes:": "😍", ":kissing_heart:": "😘", ":kissing:": "😗", ":kissing_smiling_eyes:": "😙", ":kissing_closed_eyes:": "😚", ":yum:": "😋",
+    ":stuck_out_tongue:": "😛", ":stuck_out_tongue_winking_eye:": "😜", ":zany_face:": "🤪", ":raised_eyebrow:": "🤨", ":thinking:": "🤔", ":nerd:": "🤓", ":sunglasses:": "😎",
+    ":star_struck:": "🤩", ":partying_face:": "🥳", ":smirk:": "😏", ":unamused:": "😒", ":disappointed:": "😞", ":pensive:": "😔", ":worried:": "😟", ":confused:": "😕",
+    ":slightly_frowning:": "🙁", ":pleading_face:": "🥺", ":cry:": "😢", ":sob:": "😭", ":astonished:": "😲", ":open_mouth:": "😮", ":scream:": "😱", ":flushed:": "😳",
+    ":frowning:": " frown", ":anguished:": "😧", ":fearful:": "😨", ":cold_sweat:": "😰", ":persevere:": " persevering", ":confounded:": "😖", ":tired_face:": "😫", ":weary:": "😩",
+    ":triumph:": "😤", ":angry:": "😠", ":rage:": "😡", ":no_mouth:": "😶", ":neutral_face:": "😐", ":expressionless:": "😑", ":grimacing:": " grimace", ":lying_face:": "🤥",
+    ":shushing_face:": "🤫", ":hand_over_mouth:": "🤭", ":thinking_face:": "🤔", ":zipper_mouth:": "🤐", ":raised_eyebrow:": "🤨", ":monocle_face:": "🧐", ":sleeping:": "😴",
+    ":dizzy_face:": "😵", ":exploding_head:": "🤯", ":cowboy:": "🤠", ":clown:": "🤡", ":nauseated_face:": "🤢", ":vomiting_face:": "🤮", ":sneezing_face:": "🤧", ":hot_face:": "🥵",
+    ":cold_face:": "🥶", ":woozy_face:": "🥴", ":face_with_symbols_over_mouth:": "🤬", ":face_with_spiral_eyes:": "😵‍💫", ":skull:": "💀", ":skull_and_crossbones:": "☠️",
+    ":ghost:": "👻", ":alien:": "👽", ":robot:": "🤖", ":poop:": "💩", ":smiling_cat_with_heart_eyes:": "😻", ":see_no_evil:": "🙈", ":hear_no_evil:": "🙉",
+    ":speak_no_evil:": "🙊", ":wave:": "👋", ":raised_back_of_hand:": "🤚", ":raised_hand:": "✋", ":vulcan_salute:": "🖖", ":ok_hand:": "👌", ":pinching_hand:": "🤏",
+    ":v:": "✌️", ":crossed_fingers:": "🤞", ":love_you_gesture:": "🤟", ":metal:": "🤘", ":call_me_hand:": "🤙", ":point_left:": "👈", ":point_right:": "👉", ":point_up_2:": "👆",
+    ":point_down:": "👇", ":point_up:": "☝️", ":raised_fist:": "✊", ":fist:": "👊", ":left_facing_fist:": "🤛", ":right_facing_fist:": "🤜", ":clap:": "👏", ":raised_hands:": "🙌",
+    ":open_hands:": "👐", ":handshake:": "🤝", ":thumbsup:": "👍", ":thumbsdown:": "👎", ":pray:": "🙏", ":muscle:": "💪", ":foot:": "🦶", ":leg:": "🦵", ":brain:": "🧠",
+    ":tooth:": "🦷", ":bone:": "🦴", ":eyes:": "👀", ":eye:": "👁️", ":ear:": "👂", ":nose:": "👃", ":lips:": "👄", ":tongue:": "👅", ":baby:": "👶", ":child:": "🧒",
+    ":boy:": "👦",":girl:": "👧", ":adult:": "🧑", ":older_adult:": "🧓", ":man:": "👨", ":woman:": "👩", ":bearded_person:": "🧔", ":older_man:": "👴", ":older_woman:": "👵",
+    ":monkey_face:": "🐵", ":monkey:": "🐒", ":dog:": "🐶", ":cat:": "🐱", ":mouse:": "🐭", ":hamster:": "🐹", ":rabbit:": "🐰", ":fox_face:": "🦊", ":bear:": "🐻",
+    ":panda_face:": "🐼", ":koala:": "🐨", ":tiger:": "🐯", ":lion:": "🦁", ":cow:": "🐮", ":pig:": "🐷", ":frog:": "🐸", ":chicken:": "🐔", ":penguin:": "🐧", ":bird:": "🐦",
+    ":baby_chick:": "🐤", ":duck:": "🦆", ":eagle:": "🦅", ":owl:": "🦉", ":bat:": "🦇", ":horse:": "🐴", ":unicorn:": "🦄", ":bee:": "🐝", ":bug:": "🐛", ":butterfly:": "🦋",
+    ":snail:": "🐌", ":lady_beetle:": "🐞", ":ant:": "🐜", ":cricket:": "🦗", ":spider:": "🕷️", ":scorpion:": "🦂", ":turtle:": "🐢", ":snake:": "🐍", ":lizard:": "🦎",
+    ":t_rex:": "🦖", ":sauropod:": "🦕", ":octopus:": "🐙", ":squid:": "🦑", ":shrimp:": "🦐", ":lobster:": "🦞", ":crab:": "🦀", ":blowfish:": "🐡", ":tropical_fish:": "🐠",
+    ":fish:": "🐟", ":dolphin:": "🐬", ":whale:": "🐳", ":shark:": "🦈", ":crocodile:": "🐊", ":tiger2:": "🐅", ":leopard:": "🐆", ":zebra:": "🦓", ":gorilla:": "🦍",
+    ":elephant:": "🐘", ":hippopotamus:": "🦛", ":mammoth:": "🦣", ":camel:": "🐪", ":two_hump_camel:": "🐫", ":giraffe:": "🦒", ":water_buffalo:": "🐃", ":ox:": "🐂", ":cow2:": "🐄",
+    ":racehorse:": "🐎", ":pig2:": "🐖", ":ram:": "🐏", ":sheep:": "🐑", ":goat:": "🐐", ":deer:": "🦌", ":dog2:": "🐕", ":poodle:": "🐩", ":cat2:": "🐈", ":rooster:": "🐓",
+    ":turkey:": "🦃",":dove:": "🕊️", ":rabbit2:": "🐇", ":mouse2:": "🐁", ":rat:": "🐀", ":chipmunk:": "🐿️", ":hedgehog:": "🦔", ":paw_prints:": "🐾", ":dragon:": "🐉",
+    ":dragon_face:": "🐲", ":bouquet:": "💐", ":cherry_blossom:": "🌸", ":white_flower:": "💮", ":rosette:": "🏵️", ":rose:": "🌹", ":wilted_flower:": "🥀", ":hibiscus:": "🌺",
+    ":sunflower:": "🌻", ":blossom:": "🌼", ":tulip:": "🌷", ":seedling:": "🌱", ":evergreen_tree:": "🌲", ":deciduous_tree:": "🌳", ":palm_tree:": "🌴", ":cactus:": "🌵",
+    ":ear_of_rice:": "🌾", ":herb:": "🌿", ":shamrock:": "🍀", ":maple_leaf:": "🍁", ":fallen_leaf:": "🍂", ":leaves:": "🍃", ":mushroom:": "🍄", ":earth_africa:": "🌍",
+    ":earth_americas:": "🌎", ":earth_asia:": "🌏", ":full_moon:": "🌕", ":waning_gibbous_moon:": "🌖", ":last_quarter_moon:": "🌗", ":waning_crescent_moon:": "🌘", ":new_moon:": "🌑",
+    ":waxing_crescent_moon:": "🌒", ":first_quarter_moon:": "🌓", ":waxing_gibbous_moon:": "🌔", ":crescent_moon:": "🌙", ":star:": "⭐", ":sparkles:": "✨", ":sun:": "☀️",
+    ":sunrise_over_mountains:": "🌄", ":sunrise:": "🌅", ":night_with_stars:": "🌃", ":milky_way:": "🌌", ":rainbow:": "🌈", ":bridge_at_night:": "🌉", ":water_wave:": "🌊",
+    ":volcano:": "🌋", ":mount_fuji:": "🗻", ":camping:": "🏕️", ":beach_with_umbrella:": "🏖️", ":desert:": "🏜️", ":desert_island:": "🏝️", ":national_park:": "🏞️", ":stadium:": "🏟️",
+    ":classical_building:": "🏛️", ":building_construction:": "🏗️", ":houses:": "🏘️", ":cityscape:": "🏙️", ":derelict_house:": "🏚️", ":house:": "🏠", ":house_with_garden:": "🏡",
+    ":office:": "🏢", ":post_office:": "🏣", ":hospital:": "🏥", ":bank:": "🏦", ":hotel:": "🏨", ":love_hotel:": "🏩", ":convenience_store:": "🏪", ":school:": "🏫",
+    ":department_store:": "🏬", ":factory:": "🏭", ":japanese_castle:": "🏯", ":european_castle:": "🏰", ":wedding:": "💒", ":tokyo_tower:": "🗼", ":statue_of_liberty:": "🗽",
+    ":japan:": "🗾", ":moyai:": "🗿", ":sunrise_over_mountains:": "🌄", ":sunset:": "🌇", ":hotsprings:": "♨️", ":circus_carousel:": "🎠", ":ferris_wheel:": "🎡",
+    ":roller_coaster:": "🎢", ":steam_locomotive:": "🚂", ":railway_car:": "🚃", ":high_speed_train:": "🚄", ":bullettrain_side:": "🚅", ":train2:": "🚆", ":metro:": "🚇",
+    ":light_rail:": "🚈", ":station:": "🚉", ":tram:": "🚊", ":monorail:": "🚝", ":mountain_railway:": "🚞", ":canoe:": "🛶", ":sailboat:": "⛵", ":motor_boat:": "🛥️",
+    ":passenger_ship:": "🛳️", ":ferry:": "⛴️", ":ship:": "🚢", ":airplane:": "✈️", ":small_airplane:": "🛩️", ":airplane_departure:": "🛫", ":airplane_arrival:": "🛬",
+    ":rocket:": "🚀", ":flying_saucer:": "🛸", ":helicopter:": "🚁", ":cable_car:": "🚠", ":suspension_railway:": "🚟", ":satellite_orbital:": "🛰️", ":scooter:": "🛵",
+    ":motorcycle:": "🏍️", ":racing_car:": "🏎️", ":oncoming_automobile:": "🚘", ":automobile:": "🚗", ":taxi:": "🚕", ":oncoming_taxi:": "🚖", ":articulated_lorry:": "🚛",
+    ":truck:": "🚚", ":tractor:": "🚜", ":bike:": "🚲", ":kick_scooter:": "🛴", ":skateboard:": "🛹", ":auto_rickshaw:": "🛺", ":police_car_light:": "🚨", ":police_car:": "🚓",
+    ":oncoming_police_car:": "🚔", ":ambulance:": "🚑", ":fire_engine:": "🚒", ":minibus:": "🚐", ":bus:": "🚌", ":oncoming_bus:": "🚍", ":trolleybus:": "🚎", 
+    ":mountain_cableway:": "🚠", ":construction_site:": "🚧", ":stop_sign:": "🛑", ":railway_traffic_light:": "🚦", ":vertical_traffic_light:": "🚥", ":ship:": "🛳️",
+    ":rocket:": "🚀", ":flying_saucer:": "🛸", ":world_map:": "🗺️", ":mountain:": "🏔️", ":volcano:": "🌋", ":beach_with_umbrella:": "🏖️", ":desert:": "🏜️", ":camping:": "🏕️",
+    ":national_park:": "🏞️", ":stadium:": "🏟️", ":classical_building:": "🏛️", ":building_construction:": "🏗️", ":houses:": "🏘️", ":cityscape:": "🏙️", ":derelict_house:": "🏚️"
+    }
+
+    emoji_window = tk.Toplevel()
+    emoji_window.title("Emoji Lookup")
+
+    emoji_frame = tk.Frame(emoji_window)
+    emoji_frame.pack()
+
+    row_num = 0
+    col_num = 0
+    emoji_count = 0
+    for shortcut, emoji in emojis.items():
+        button = tk.Button(emoji_frame, text=emoji, command=lambda e=emoji: add_emoji(e, input_field), font=("Arial", 16), width=5)
+        button.grid(row=row_num, column=col_num, padx=1, pady=1)
+        col_num += 1
+        if col_num >= 20:
+            col_num = 0
+            row_num += 1
+        emoji_count += 1
+    
+    print(emoji_count)
+        
+    
+    apply_theme(emoji_window, buttons=emoji_frame.winfo_children())
+
+def add_emoji(emoji, input_field):
+    input_field.insert(tk.END, emoji)
+
 # Create the Tkinter window and its components
 def create_gui(client_socket):
     window = tk.Tk()
     window.title("Chat Client")
-    
+
     # Create message display box
     text_area = scrolledtext.ScrolledText(window, width=50, height=15, wrap=tk.WORD, state=tk.DISABLED)
     text_area.grid(row=0, column=0, columnspan=2, padx=10, pady=10)
-    
+
     # Create message entry box
     entry_widget = tk.Entry(window, width=40)
     entry_widget.grid(row=1, column=0, padx=10, pady=10)
-    
+
     # Create send file button
     file_button = tk.Button(window, text="Send File", width=10, command=lambda: select_file_and_send(client_socket, text_area))
     file_button.grid(row=1, column=1, columnspan=2, pady=5)
+    
+    # Create emoji button
+    emoji_button = tk.Button(window, text="Emoji", width=10, command=lambda: emoji_lookup(entry_widget))
+    emoji_button.grid(row=2, column=1, columnspan=2, pady=5)
 
     # Bind Enter key to send message
     entry_widget.bind('<Return>', lambda event: send_message(client_socket, entry_widget, text_area))
-    
+
     # Start receiving messages in a separate thread
-    theme_button = tk.Button(window, text="Change Theme", command=lambda: open_theme_selector(window, text_area, entry_widget, [file_button, theme_button]))
+    theme_button = tk.Button(window, text="Change Theme", command=lambda: open_theme_selector(window, text_area, entry_widget, [file_button, theme_button, emoji_button]))
     theme_button.grid(row=2, column=0, columnspan=2, pady=5)
-    
-    apply_theme(window, text_area=[text_area], entry_widget=[entry_widget], buttons=[file_button, theme_button])
+
+    apply_theme(window, text_area=[text_area], entry_widget=[entry_widget], buttons=[file_button, theme_button, emoji_button])
     
     receive_thread = threading.Thread(target=receive_messages, args=(client_socket, text_area), daemon=True)
     receive_thread.start()
