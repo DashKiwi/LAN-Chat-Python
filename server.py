@@ -108,7 +108,7 @@ while True:
                         client_socket.send(message_to_send)
             except UnicodeDecodeError:
                 # File transfer
-                filename_header = notified_socket.recv(FILE_HEADER_LENGTH)
+                filename_header = notified_socket.recv(FILE_HEADER_LENGTH)t
                 print(f"Raw filename header: {filename_header}") #debugging print
                 try:
                     filename_length = int(filename_header.decode('utf-8').strip())
