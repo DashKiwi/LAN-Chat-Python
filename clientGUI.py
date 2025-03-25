@@ -526,22 +526,18 @@ def create_gui(client_socket):
     entry_widget = tk.Entry(window, width=40)
     entry_widget.grid(row=1, column=0, padx=10, pady=10)
     
-    # Create send button
-    send_button = tk.Button(window, text="Send", width=10, command=lambda: send_message(client_socket, entry_widget, text_area))
-    send_button.grid(row=1, column=1, padx=10, pady=10)
-    
     # Create send file button
     file_button = tk.Button(window, text="Send File", width=10, command=lambda: select_file_and_send(client_socket, text_area))
-    file_button.grid(row=2, column=1, columnspan=2, pady=5)
+    file_button.grid(row=1, column=1, columnspan=2, pady=5)
 
     # Bind Enter key to send message
     entry_widget.bind('<Return>', lambda event: send_message(client_socket, entry_widget, text_area))
     
     # Start receiving messages in a separate thread
-    theme_button = tk.Button(window, text="Change Theme", command=lambda: open_theme_selector(window, text_area, entry_widget, [send_button, file_button, theme_button]))
+    theme_button = tk.Button(window, text="Change Theme", command=lambda: open_theme_selector(window, text_area, entry_widget, [file_button, theme_button]))
     theme_button.grid(row=2, column=0, columnspan=2, pady=5)
     
-    apply_theme(window, text_area=[text_area], entry_widget=[entry_widget], buttons=[send_button, file_button, theme_button])
+    apply_theme(window, text_area=[text_area], entry_widget=[entry_widget], buttons=[file_button, theme_button])
     
     receive_thread = threading.Thread(target=receive_messages, args=(client_socket, text_area), daemon=True)
     receive_thread.start()
