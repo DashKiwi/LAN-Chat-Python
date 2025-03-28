@@ -258,7 +258,8 @@ def connect_to_server(ip, port, username):
         return(f"Please try again. Server Unresponsive!")
 
 # Receive messages and display them in the GUI's text area
-def receive_messages(client_socket, text_area):
+def receive_messages(client_socket, text_area, window):
+    global receive_thread
     while True:
         try:
             ready_to_read, _, _ = select.select([client_socket], [], [], 0.1)
@@ -267,8 +268,10 @@ def receive_messages(client_socket, text_area):
                 username_header = client_socket.recv(HEADER_LENGTH)
                 if not len(username_header):
                     print("Connection closed by the server")
-                    sys.exit()
-                
+                    window.destroy()
+                    show_connection_window()
+                    receive_thread.stop()
+
                 username_length = int(username_header.decode('utf-8').strip())
                 username = client_socket.recv(username_length).decode('utf-8')
 
@@ -276,27 +279,23 @@ def receive_messages(client_socket, text_area):
                 message_length = int(message_header.decode('utf-8').strip())
                 message = client_socket.recv(message_length)
 
-                try:
-                    message_str = message.decode('utf-8')
-                    local_time = time.strftime("%H:%M")
-                    text_area.config(state=tk.NORMAL)
-                    text_area.insert(tk.END, f"\n{local_time} {username} > {message_str}")
-                    text_area.yview(tk.END)
-                    text_area.config(state=tk.DISABLED)
-                except UnicodeDecodeError:
-                    # File transfer
+                message_str = message.decode('utf-8')
+
+                if message_str == "FILE":
                     filename_header = client_socket.recv(FILE_HEADER_LENGTH)
                     filename_length = int(filename_header.decode('utf-8').strip())
                     filename = client_socket.recv(filename_length).decode('utf-8')
 
-                    file_data = message  # Message contains the file data
+                    file_data_header = client_socket.recv(HEADER_LENGTH)
+                    file_data_length = int(file_data_header.decode('utf-8').strip())
+                    file_data = client_socket.recv(file_data_length)
 
                     # Check if the file is an image or GIF
                     if filename.lower().endswith(('.png', '.jpg', '.jpeg', '.gif')):
                         try:
                             image_data = io.BytesIO(file_data)
                             img = Image.open(image_data)
-                            img.thumbnail((200, 200))  # Resize image to fit in chat
+                            img.thumbnail((200, 200))
                             photo = ImageTk.PhotoImage(img)
 
                             local_time = time.strftime("%H:%M")
@@ -322,6 +321,13 @@ def receive_messages(client_socket, text_area):
                         text_area.insert(tk.END, f"\n{local_time} {username} > File received: {filename}")
                         text_area.yview(tk.END)
                         text_area.config(state=tk.DISABLED)
+
+                else:
+                    local_time = time.strftime("%H:%M")
+                    text_area.config(state=tk.NORMAL)
+                    text_area.insert(tk.END, f"\n{local_time} {username} > {message_str}")
+                    text_area.yview(tk.END)
+                    text_area.config(state=tk.DISABLED)
 
         except BlockingIOError:
             continue
@@ -367,15 +373,20 @@ def send_file(client_socket, filename):
     try:
         with open(filename, 'rb') as file:
             file_data = file.read()
-		
-        print(os.path.basename(filename))
+
         filename_encoded = os.path.basename(filename).encode('utf-8')
-        filename_header = f"{len(filename_encoded):<{FILE_HEADER_LENGTH}}".encode('utf-8')
+        filename_length = len(filename_encoded)
+        filename_header = f"{filename_length:<{FILE_HEADER_LENGTH}}".encode('utf-8')
 
-        message_header = f"{len(file_data):<{HEADER_LENGTH}}".encode('utf-8')
+        file_data_length = len(file_data)
+        file_data_header = f"{file_data_length:<{HEADER_LENGTH}}".encode('utf-8')
 
-        client_socket.send(message_header + file_data)
-        client_socket.send(filename_header + filename_encoded)
+        # Send a file indicator
+        file_indicator = "FILE".encode('utf-8')
+        indicator_header = f"{len(file_indicator):<{HEADER_LENGTH}}".encode('utf-8')
+
+        #send the file indicator, then the file name length, then the filename, then the file data length, then the data.
+        client_socket.send(indicator_header + file_indicator + filename_header + filename_encoded + file_data_header + file_data)
 
     except Exception as e:
         print(f"Error sending file: {e}")
@@ -603,9 +614,10 @@ def add_emoji(emoji, input_field):
 
 # Create the Tkinter window and its components
 def create_gui(client_socket):
+    global receive_thread
     window = tk.Tk()
     window.title("Chat Client")
-
+    
     # Create message display box
     text_area = scrolledtext.ScrolledText(window, width=50, height=15, wrap=tk.WORD, state=tk.DISABLED)
     text_area.grid(row=0, column=0, columnspan=2, padx=10, pady=10)
@@ -631,7 +643,7 @@ def create_gui(client_socket):
 
     apply_theme(window, text_area=[text_area], entry_widget=[entry_widget], buttons=[file_button, theme_button, emoji_button])
     
-    receive_thread = threading.Thread(target=receive_messages, args=(client_socket, text_area), daemon=True)
+    receive_thread = threading.Thread(target=receive_messages, args=(client_socket, text_area, window), daemon=True)
     receive_thread.start()
     
     # Start the Tkinter event loop
