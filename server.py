@@ -24,7 +24,7 @@ def receive_message(client_socket):
         return False
 
 HEADER_LENGTH = 10
-FILE_HEADER_LENGTH = 20  # Increased for file data
+FILE_HEADER_LENGTH = 20
 
 while True:
     try:
@@ -98,33 +98,34 @@ while True:
                 del clients[notified_socket]
                 continue
 
-            # Check if it's a file transfer
             try:
                 message_str = message['data'].decode('utf-8')
-                print(f"Received message from {clients[notified_socket]['data'].decode('utf-8')}: {message_str}")
-                for client_socket in clients:
-                    if client_socket != notified_socket:
-                        message_to_send = clients[notified_socket]["header"] + clients[notified_socket]["data"] + message["header"] + message["data"]
-                        client_socket.send(message_to_send)
-            except UnicodeDecodeError:
-                # File transfer
-                filename_header = notified_socket.recv(FILE_HEADER_LENGTH)
-                print(f"Raw filename header: {filename_header}") #debugging print
-                try:
+                if message_str == "FILE":
+                    filename_header = notified_socket.recv(FILE_HEADER_LENGTH)
                     filename_length = int(filename_header.decode('utf-8').strip())
                     filename = notified_socket.recv(filename_length).decode('utf-8')
+
+                    file_data_header = notified_socket.recv(HEADER_LENGTH)
+                    file_data_length = int(file_data_header.decode('utf-8').strip())
+                    file_data = notified_socket.recv(file_data_length)
 
                     print(f"Received file '{filename}' from {clients[notified_socket]['data'].decode('utf-8')}")
 
                     # Forward file to all other clients.
                     for client_socket in clients:
                         if client_socket != notified_socket:
+                            message_to_send = "FILE".encode('utf-8')
+                            header = f"{len(message_to_send):<{HEADER_LENGTH}}".encode('utf-8')
+                            client_socket.send(header + message_to_send + filename_header + filename.encode('utf-8') + file_data_header + file_data)
+                else:
+                    print(f"Received message from {clients[notified_socket]['data'].decode('utf-8')}: {message_str}")
+                    for client_socket in clients:
+                        if client_socket != notified_socket:
                             message_to_send = clients[notified_socket]["header"] + clients[notified_socket]["data"] + message["header"] + message["data"]
                             client_socket.send(message_to_send)
-                            client_socket.send(filename_header + filename.encode('utf-8'))
-                except (UnicodeDecodeError, ValueError) as e:
-                    print(f"Error decoding filename header: {e}")
-                    continue
+            except (UnicodeDecodeError, ValueError) as e:
+                print(f"Error processing message: {e}")
+                continue
 
     for notified_socket in exception_sockets:
         sockets_list.remove(notified_socket)
