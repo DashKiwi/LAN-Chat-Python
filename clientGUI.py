@@ -264,65 +264,88 @@ def receive_messages(client_socket, text_area, window):
         try:
             ready_to_read, _, _ = select.select([client_socket], [], [], 0.1)
             if ready_to_read:
-                # Try receiving data
                 username_header = client_socket.recv(HEADER_LENGTH)
                 if not len(username_header):
                     print("Connection closed by the server")
                     window.destroy()
-                    show_connection_window()
-                    receive_thread.stop()
+                    break
 
                 username_length = int(username_header.decode('utf-8').strip())
                 username = client_socket.recv(username_length).decode('utf-8')
+                
+                if username == "FILE":
+                    try:
+                        filename_header = b''
+                        while len(filename_header) < FILE_HEADER_LENGTH:
+                            part = client_socket.recv(FILE_HEADER_LENGTH - len(filename_header))
+                            if not part:
+                                raise ConnectionError("Connection closed while receiving filename header")
+                            filename_header += part
+                        print(f"Raw filename header received: {filename_header}")
+                        filename_length = int(filename_header.decode('utf-8').strip())
+                        print(f"Filename length after decode and strip: {filename_length}")
 
-                message_header = client_socket.recv(HEADER_LENGTH)
-                message_length = int(message_header.decode('utf-8').strip())
-                message = client_socket.recv(message_length)
+                        filename = client_socket.recv(filename_length).decode('utf-8')
 
-                message_str = message.decode('utf-8')
+                        file_data_header = b''
+                        while len(file_data_header) < HEADER_LENGTH:
+                            part = client_socket.recv(HEADER_LENGTH - len(file_data_header))
+                            if not part:
+                                raise ConnectionError("Connection closed while receiving file data header")
+                            file_data_header += part
+                        print(f"Received file data header: {file_data_header}")
+                        file_data_length = int(file_data_header.decode('utf-8').strip())
+                        print(f"File data length: {file_data_length}")
 
-                if message_str == "FILE":
-                    filename_header = client_socket.recv(FILE_HEADER_LENGTH)
-                    filename_length = int(filename_header.decode('utf-8').strip())
-                    filename = client_socket.recv(filename_length).decode('utf-8')
+                        file_data = b''
+                        while len(file_data) < file_data_length:
+                            part = client_socket.recv(file_data_length - len(file_data))
+                            if not part:
+                                raise ConnectionError("Connection closed while receiving file data")
+                            file_data += part
+                        if filename.lower().endswith(('.png', '.jpg', '.jpeg', '.gif')):
+                            try:
+                                image_data = io.BytesIO(file_data)
+                                img = Image.open(image_data)
+                                img.thumbnail((200, 200))
+                                photo = ImageTk.PhotoImage(img)
 
-                    file_data_header = client_socket.recv(HEADER_LENGTH)
-                    file_data_length = int(file_data_header.decode('utf-8').strip())
-                    file_data = client_socket.recv(file_data_length)
-
-                    # Check if the file is an image or GIF
-                    if filename.lower().endswith(('.png', '.jpg', '.jpeg', '.gif')):
-                        try:
-                            image_data = io.BytesIO(file_data)
-                            img = Image.open(image_data)
-                            img.thumbnail((200, 200))
-                            photo = ImageTk.PhotoImage(img)
-
-                            local_time = time.strftime("%H:%M")
-                            text_area.config(state=tk.NORMAL)
-                            text_area.image_names = []
-                            text_area.image_names.append(photo)
-                            text_area.insert(tk.END, f"\n{local_time} {username} > ")
-                            text_area.image_create(tk.END, image=photo)
-                            text_area.yview(tk.END)
-                            text_area.config(state=tk.DISABLED)
-                        except Exception as e:
-                            print(f"Error displaying image: {e}")
+                                local_time = time.strftime("%H:%M")
+                                text_area.config(state=tk.NORMAL)
+                                text_area.image_names = []
+                                text_area.image_names.append(photo)
+                                text_area.insert(tk.END, f"\n{local_time} {username} > ")
+                                text_area.image_create(tk.END, image=photo)
+                                text_area.yview(tk.END)
+                                text_area.config(state=tk.DISABLED)
+                            except Exception as e:
+                                print(f"Error displaying image: {e}")
+                                save_file(file_data, filename)
+                                local_time = time.strftime("%H:%M")
+                                text_area.config(state=tk.NORMAL)
+                                text_area.insert(tk.END, f"\n{local_time} {username} > File received: {filename}")
+                                text_area.yview(tk.END)
+                                text_area.config(state=tk.DISABLED)
+                        else:
                             save_file(file_data, filename)
                             local_time = time.strftime("%H:%M")
                             text_area.config(state=tk.NORMAL)
                             text_area.insert(tk.END, f"\n{local_time} {username} > File received: {filename}")
                             text_area.yview(tk.END)
                             text_area.config(state=tk.DISABLED)
-                    else:
-                        save_file(file_data, filename)
-                        local_time = time.strftime("%H:%M")
-                        text_area.config(state=tk.NORMAL)
-                        text_area.insert(tk.END, f"\n{local_time} {username} > File received: {filename}")
-                        text_area.yview(tk.END)
-                        text_area.config(state=tk.DISABLED)
 
+                        continue # Important: Skip regular message processing after file
+                    except ValueError as e:
+                        print(f"Error processing file header: {e}")
+                        continue
+                    except Exception as e:
+                        print(f"Error receiving file: {e}")
+                        continue
                 else:
+                    message_header = client_socket.recv(HEADER_LENGTH)
+                    message_length = int(message_header.decode('utf-8').strip())
+                    message = client_socket.recv(message_length)
+                    message_str = message.decode('utf-8')
                     local_time = time.strftime("%H:%M")
                     text_area.config(state=tk.NORMAL)
                     text_area.insert(tk.END, f"\n{local_time} {username} > {message_str}")

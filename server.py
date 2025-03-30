@@ -101,8 +101,11 @@ while True:
             try:
                 message_str = message['data'].decode('utf-8')
                 if message_str == "FILE":
-                    filename_header = notified_socket.recv(FILE_HEADER_LENGTH)
+                    filename_header = client_socket.recv(FILE_HEADER_LENGTH)
+                    print(f"Raw filename header received: {filename_header}") # Add this line
                     filename_length = int(filename_header.decode('utf-8').strip())
+                    print(f"Filename length after decode and strip: {filename_length}") #Add this line
+                    print(f"Filename length before int conversion: {filename_header.decode('utf-8').strip()}") #Add this line
                     filename = notified_socket.recv(filename_length).decode('utf-8')
 
                     file_data_header = notified_socket.recv(HEADER_LENGTH)
