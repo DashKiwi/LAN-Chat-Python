@@ -70,7 +70,7 @@ emojis = {
     }
 
 def set_path():
-    global application_path, THEME_FILE, SERVERS_FILE
+    global application_path, THEME_FILE, SERVERS_FILE, MESSAGE_ICO, NO_MESSAGE_ICO
     if getattr(sys, 'frozen', False):
         # Running as a packaged executable
         application_path = os.path.dirname(sys.executable)
@@ -79,6 +79,8 @@ def set_path():
         application_path = os.path.dirname(__file__)
     THEME_FILE = os.path.join(application_path, "themes.json")
     SERVERS_FILE = os.path.join(application_path, "servers.json")
+    MESSAGE_ICO = os.path.join(application_path, "Message.png")
+    NO_MESSAGE_ICO = os.path.join(application_path, "No_Message.png")
 
 def save_themes():
     global THEME_FILE
@@ -261,9 +263,13 @@ def connect_to_server(ip, port, username):
 def receive_messages(client_socket, text_area, window):
     global receive_thread
     while True:
+        if window.state() == "normal":
+            window.iconphoto(False, tk.PhotoImage(file=NO_MESSAGE_ICO))
         try:
             ready_to_read, _, _ = select.select([client_socket], [], [], 0.1)
             if ready_to_read:
+                if window.state() != "normal":
+                    window.iconphoto(False, tk.PhotoImage(file=MESSAGE_ICO))
                 username_header = client_socket.recv(HEADER_LENGTH)
                 if not len(username_header):
                     print("Connection closed by the server")
@@ -351,7 +357,6 @@ def receive_messages(client_socket, text_area, window):
                     text_area.insert(tk.END, f"\n{local_time} {username} > {message_str}")
                     text_area.yview(tk.END)
                     text_area.config(state=tk.DISABLED)
-
         except BlockingIOError:
             continue
         except Exception as e:
