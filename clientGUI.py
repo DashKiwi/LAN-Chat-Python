@@ -281,9 +281,7 @@ def receive_messages(client_socket, text_area, window):
                             if not part:
                                 raise ConnectionError("Connection closed while receiving filename header")
                             filename_header += part
-                        print(f"Raw filename header received: {filename_header}")
                         filename_length = int(filename_header.decode('utf-8').strip())
-                        print(f"Filename length after decode and strip: {filename_length}")
 
                         filename = client_socket.recv(filename_length).decode('utf-8')
 
@@ -293,9 +291,7 @@ def receive_messages(client_socket, text_area, window):
                             if not part:
                                 raise ConnectionError("Connection closed while receiving file data header")
                             file_data_header += part
-                        print(f"Received file data header: {file_data_header}")
                         file_data_length = int(file_data_header.decode('utf-8').strip())
-                        print(f"File data length: {file_data_length}")
 
                         file_data = b''
                         while len(file_data) < file_data_length:
@@ -303,6 +299,10 @@ def receive_messages(client_socket, text_area, window):
                             if not part:
                                 raise ConnectionError("Connection closed while receiving file data")
                             file_data += part
+                        
+                        username_header = client_socket.recv(HEADER_LENGTH)
+                        username_length = int(username_header.decode('utf-8').strip())
+                        username = client_socket.recv(username_length).decode('utf-8')
                         if filename.lower().endswith(('.png', '.jpg', '.jpeg', '.gif')):
                             try:
                                 image_data = io.BytesIO(file_data)

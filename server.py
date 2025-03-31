@@ -119,7 +119,7 @@ while True:
                         if client_socket != notified_socket:
                             message_to_send = "FILE".encode('utf-8')
                             header = f"{len(message_to_send):<{HEADER_LENGTH}}".encode('utf-8')
-                            client_socket.send(header + message_to_send + filename_header + filename.encode('utf-8') + file_data_header + file_data)
+                            client_socket.send(header + message_to_send + filename_header + filename.encode('utf-8') + file_data_header + file_data + clients[notified_socket]["header"] + clients[notified_socket]["data"])
                 else:
                     print(f"Received message from {clients[notified_socket]['data'].decode('utf-8')}: {message_str}")
                     for client_socket in clients:
