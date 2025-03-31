@@ -494,14 +494,14 @@ def show_connection_window():
     connect_button = tk.Button(root, text="Connect", command=lambda: try_connect(ip_entry, port_entry, username_entry, error_label, root))
     connect_button.grid(row=3, column=0, columnspan=2, pady=10)
 
-    prev_connections_button = tk.Button(root, text="Previous Connections", command=lambda: open_previous_connections(root))
+    prev_connections_button = tk.Button(root, text="Previous Connections", command=lambda: open_previous_connections(root, error_label))
     prev_connections_button.grid(row=4, column=0, columnspan=2, pady=5)
 
     apply_theme(root, entry_widget=[ip_entry, port_entry, username_entry], buttons=[connect_button, prev_connections_button, error_label], text=[ip_text, port_text, user_text])
 
     root.mainloop()
 
-def open_previous_connections(parent):
+def open_previous_connections(parent, error_label):
     prev_window = Toplevel(parent)
     prev_window.title("Previous Connections")
     prev_window.geometry("300x300")
@@ -514,7 +514,7 @@ def open_previous_connections(parent):
     for server in servers:
         server_listbox.insert(tk.END, f"{server['name']} ({server['ip']}:{server['port']})")
 
-    join_button = tk.Button(prev_window, text="Join Server", command=lambda: join_selected(server_listbox, servers, prev_window))
+    join_button = tk.Button(prev_window, text="Join Server", command=lambda: join_selected(server_listbox, servers, prev_window, error_label, parent))
     join_button.pack(pady=5)
 
     add_button = tk.Button(prev_window, text="Add Server", command=lambda: add_edit_server_window(servers, prev_window))
@@ -525,7 +525,7 @@ def open_previous_connections(parent):
 
     apply_theme(prev_window, entry_widget=[server_listbox], buttons=[join_button, add_button, edit_button])
 
-def join_selected(server_listbox, servers, prev_window):
+def join_selected(server_listbox, servers, prev_window, error_label, parent):
     global ip_entry, port_entry, username_entry
 
     selection = server_listbox.curselection()
@@ -538,6 +538,7 @@ def join_selected(server_listbox, servers, prev_window):
         username_entry.delete(0, tk.END)
         username_entry.insert(0, selected["name"])
         prev_window.destroy()
+        try_connect(ip_entry, port_entry, username_entry, error_label, parent)
 
 def edit_selected(server_listbox, servers, parent):
     selection = server_listbox.curselection()
